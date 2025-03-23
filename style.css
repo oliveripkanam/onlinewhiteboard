@@ -43,21 +43,26 @@ body {
 }
 
 .toolbar {
-    width: 200px;
+    width: 260px;
+    min-width: 260px;
     background-color: var(--toolbar-bg);
-    padding: 20px;
+    padding: 15px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     overflow-y: auto;
+    overflow-x: visible;
     transition: background-color 0.3s ease;
+    max-height: 100vh;
+    z-index: 10;
 }
 
 .tool-section {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
 }
 
 .tool-section h3 {
@@ -65,16 +70,35 @@ body {
     color: var(--text-color);
     margin-bottom: 5px;
     transition: color 0.3s ease;
+    padding-left: 5px;
+}
+
+.tool-section button {
+    padding: 10px 15px;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    gap: 8px;
+}
+
+.tool-section button::before {
+    font-size: 18px;
+    min-width: 25px;
+    text-align: center;
 }
 
 button {
-    padding: 8px 12px;
+    padding: 10px 15px;
     background-color: var(--button-bg);
     color: var(--text-color);
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    text-align: left;
     transition: background-color 0.2s, color 0.3s ease;
 }
 
@@ -98,12 +122,13 @@ button.disabled:hover {
 .color-picker {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 8px;
+    width: 100%;
 }
 
 .color-option {
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid var(--border-color);
@@ -119,6 +144,7 @@ button.disabled:hover {
     background-color: var(--canvas-bg);
     cursor: crosshair;
     transition: background-color 0.3s ease;
+    margin-left: 5px;
 }
 
 #thickness {
@@ -142,15 +168,22 @@ button.disabled:hover {
     
     .toolbar {
         width: 100%;
+        min-width: 100%;
         height: auto;
-        max-height: 200px;
+        max-height: 300px;
         flex-direction: row;
         flex-wrap: wrap;
-        padding: 10px;
+        padding: 15px;
         overflow-x: auto;
     }
     
     .tool-section {
-        min-width: 150px;
+        min-width: 200px;
+        max-width: 300px;
+        padding-right: 15px;
+    }
+    
+    .tool-section button {
+        width: 100%;
     }
 } 

@@ -4,23 +4,45 @@ A simple online whiteboard application for tutoring, brainstorming, and collabor
 
 ## Features
 
-- Drawing canvas with pen tool
+- Drawing tools:
+  - Pen tool with adjustable thickness
+  - Eraser tool
+  - Shape tools (rectangle, circle, line)
+  - Text tool for adding annotations
 - Multiple color options
-- Adjustable pen thickness
-- Eraser tool
-- Clear canvas option
 - Undo/Redo functionality with keyboard shortcuts (Ctrl+Z, Ctrl+X)
-- Responsive design
+- Save whiteboard as PNG image (Ctrl+S)
+- Dark/light theme toggle
+- Zoom and pan capabilities
+- Responsive design for desktop and mobile
 - Touch support for mobile devices
+- Written in TypeScript for better type safety
 
 ## How to Use
 
-1. **Pen Tool**: Click the pen button to draw on the whiteboard
+1. **Drawing Tools**:
+   - **Pen**: Click the pen button to draw freehand
+   - **Eraser**: Click the eraser button to erase parts of your drawing
+   - **Rectangle**: Draw rectangles by clicking and dragging
+   - **Circle**: Draw circles by clicking and dragging (radius determined by drag distance)
+   - **Line**: Draw straight lines by clicking and dragging
+   - **Text**: Add text annotations by clicking where you want to place text, then type
+
 2. **Colors**: Click on a color circle to change the drawing color
-3. **Thickness**: Adjust the slider to change the pen/eraser thickness
-4. **Eraser**: Click the eraser button to erase parts of your drawing
+
+3. **Thickness**: Adjust the slider to change the pen/eraser/shape thickness
+
+4. **Undo/Redo**: Use the buttons or keyboard shortcuts (Ctrl+Z for undo, Ctrl+X for redo)
+
 5. **Clear All**: Click the clear button to erase the entire whiteboard
-6. **Undo/Redo**: Use the undo/redo buttons or keyboard shortcuts (Ctrl+Z for undo, Ctrl+X for redo)
+
+6. **Save**: Click the save button or use Ctrl+S to save your whiteboard as a PNG image
+
+7. **Dark Mode**: Toggle between light and dark themes with the theme switch button
+
+8. **Zoom & Pan**: 
+   - Use mouse wheel to zoom in/out
+   - On touch devices, use two fingers to pan around
 
 ## Live Demo
 

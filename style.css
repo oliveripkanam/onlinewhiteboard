@@ -1,0 +1,92 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.toolbar {
+    width: 200px;
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+.tool-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tool-section h3 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+button {
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+button.active {
+    background-color: #d0d0d0;
+}
+
+.color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.color-option {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #ccc;
+}
+
+.color-option.active {
+    border-color: #333;
+}
+
+#whiteboard {
+    flex: 1;
+    background-color: white;
+    cursor: crosshair;
+}
+
+#thickness {
+    width: 100%;
+}
+
+#thickness-value {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+} 

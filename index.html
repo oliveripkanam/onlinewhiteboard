@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Whiteboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <div class="tool-section">
+                <h3>Tools</h3>
+                <button id="pen" class="active">✏️ Pen</button>
+                <button id="eraser">🧽 Eraser</button>
+                <button id="clear">🗑️ Clear All</button>
+            </div>
+            
+            <div class="tool-section">
+                <h3>Color</h3>
+                <div class="color-picker">
+                    <div class="color-option" data-color="#000000" style="background-color: #000000;"></div>
+                    <div class="color-option" data-color="#FF0000" style="background-color: #FF0000;"></div>
+                    <div class="color-option" data-color="#00FF00" style="background-color: #00FF00;"></div>
+                    <div class="color-option" data-color="#0000FF" style="background-color: #0000FF;"></div>
+                    <div class="color-option" data-color="#FFFF00" style="background-color: #FFFF00;"></div>
+                </div>
+            </div>
+            
+            <div class="tool-section">
+                <h3>Thickness</h3>
+                <input type="range" id="thickness" min="1" max="20" value="3">
+                <div id="thickness-value">3px</div>
+            </div>
+        </div>
+        
+        <canvas id="whiteboard"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

@@ -9,6 +9,7 @@ A simple online whiteboard application for tutoring, brainstorming, and collabor
 - Adjustable pen thickness
 - Eraser tool
 - Clear canvas option
+- Undo/Redo functionality with keyboard shortcuts (Ctrl+Z, Ctrl+X)
 - Responsive design
 - Touch support for mobile devices
 
@@ -19,6 +20,7 @@ A simple online whiteboard application for tutoring, brainstorming, and collabor
 3. **Thickness**: Adjust the slider to change the pen/eraser thickness
 4. **Eraser**: Click the eraser button to erase parts of your drawing
 5. **Clear All**: Click the clear button to erase the entire whiteboard
+6. **Undo/Redo**: Use the undo/redo buttons or keyboard shortcuts (Ctrl+Z for undo, Ctrl+X for redo)
 
 ## Live Demo
 

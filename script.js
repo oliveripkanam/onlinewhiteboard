@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const penButton = document.getElementById('pen');
     const eraserButton = document.getElementById('eraser');
     const clearButton = document.getElementById('clear');
+    const undoButton = document.getElementById('undo');
+    const redoButton = document.getElementById('redo');
 
     // Set canvas size
     function resizeCanvas() {
@@ -21,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTool = 'pen';
     let currentColor = '#000000';
     let currentThickness = 3;
+    
+    // History for undo/redo
+    let history = [];
+    let redoStack = [];
+    let currentStep = -1;
+
+    // Save initial canvas state
+    saveCanvasState();
 
     // Initialize the first color as active
     colorOptions[0].classList.add('active');
@@ -70,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearButton.addEventListener('click', () => {
         if (confirm('Are you sure you want to clear the whiteboard?')) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            saveCanvasState();
         }
     });
 
@@ -80,8 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopDrawing() {
-        isDrawing = false;
-        ctx.beginPath(); // Reset the path for the next drawing action
+        if (isDrawing) {
+            isDrawing = false;
+            ctx.beginPath(); // Reset the path for the next drawing action
+            saveCanvasState(); // Save state when stroke is completed
+        }
     }
 
     function draw(e) {
@@ -107,6 +121,92 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.beginPath();
         ctx.moveTo(x, y);
     }
+
+    // Undo/Redo functions
+    function saveCanvasState() {
+        // Clear redo stack when a new action is performed
+        if (currentStep < history.length - 1) {
+            history = history.slice(0, currentStep + 1);
+            redoStack = [];
+        }
+        
+        currentStep++;
+        
+        // Save the current canvas state
+        const canvasData = canvas.toDataURL();
+        history.push(canvasData);
+        
+        // Limit history size to prevent memory issues
+        if (history.length > 20) {
+            history.shift();
+            currentStep--;
+        }
+        
+        // Update button states
+        updateUndoRedoButtons();
+    }
+
+    function undo() {
+        if (currentStep > 0) {
+            currentStep--;
+            redoStack.push(history[currentStep + 1]);
+            restoreCanvasState(history[currentStep]);
+            updateUndoRedoButtons();
+        }
+    }
+
+    function redo() {
+        if (redoStack.length > 0) {
+            currentStep++;
+            const redoState = redoStack.pop();
+            history.push(redoState);
+            restoreCanvasState(redoState);
+            updateUndoRedoButtons();
+        }
+    }
+
+    function updateUndoRedoButtons() {
+        // Disable undo button if no history to undo
+        if (currentStep <= 0) {
+            undoButton.classList.add('disabled');
+        } else {
+            undoButton.classList.remove('disabled');
+        }
+        
+        // Disable redo button if no history to redo
+        if (redoStack.length === 0) {
+            redoButton.classList.add('disabled');
+        } else {
+            redoButton.classList.remove('disabled');
+        }
+    }
+
+    function restoreCanvasState(savedState) {
+        const img = new Image();
+        img.src = savedState;
+        img.onload = function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+    }
+
+    // Add undo/redo buttons event listeners
+    undoButton.addEventListener('click', undo);
+    redoButton.addEventListener('click', redo);
+
+    // Add undo/redo keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault();
+            undo();
+        } else if (e.ctrlKey && e.key === 'x') {
+            e.preventDefault();
+            redo();
+        }
+    });
+
+    // Initial button state
+    updateUndoRedoButtons();
 
     // Event listeners for drawing
     canvas.addEventListener('mousedown', startDrawing);

@@ -57,6 +57,15 @@ button.active {
     background-color: #d0d0d0;
 }
 
+button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+button.disabled:hover {
+    background-color: #f0f0f0;
+}
+
 .color-picker {
     display: flex;
     flex-wrap: wrap;

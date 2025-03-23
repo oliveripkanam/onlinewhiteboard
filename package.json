@@ -1,0 +1,30 @@
+{
+  "name": "online-whiteboard",
+  "version": "1.0.0",
+  "description": "A whiteboard for tutoring lessons",
+  "main": "dist/script.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oliveripkanam/onlinewhiteboard.git"
+  },
+  "keywords": [
+    "whiteboard",
+    "tutoring",
+    "typescript"
+  ],
+  "author": "oliveripkanam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oliveripkanam/onlinewhiteboard/issues"
+  },
+  "homepage": "https://github.com/oliveripkanam/onlinewhiteboard#readme",
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "serve": "^14.2.1"
+  }
+} 

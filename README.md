@@ -1,6 +1,6 @@
 # Online Whiteboard
 
-A simple online whiteboard application for tutoring, brainstorming, and collaboration.
+A simple online whiteboard application for tutoring, brainstorming, and collaboration. Built with TypeScript.
 
 ## Features
 
@@ -40,10 +40,22 @@ git clone https://github.com/oliveripkanam/onlinewhiteboard.git
 cd onlinewhiteboard
 ```
 
-3. Open the `index.html` file in your browser, or use a local server:
+3. Install dependencies:
 ```
-npx serve
+npm install
 ```
+
+4. Build the TypeScript code:
+```
+npm run build
+```
+
+5. Start the development server:
+```
+npm start
+```
+
+You can also use `npm run watch` to automatically rebuild the TypeScript code when changes are made.
 
 ## Deployment
 

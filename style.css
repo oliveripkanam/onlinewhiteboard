@@ -1,25 +1,29 @@
 :root {
     --bg-color: #f5f5f5;
-    --toolbar-bg: #fff;
-    --text-color: #333;
-    --button-bg: #f0f0f0;
+    --toolbar-bg: #f5f5f5;
+    --text-color: #333333;
+    --button-bg: #e6e6e6;
     --button-hover: #e0e0e0;
     --button-active: #d0d0d0;
-    --border-color: #ccc;
-    --canvas-bg: #fff;
+    --border-color: #d1d1d1;
+    --canvas-bg: #ffffff;
     --disabled-opacity: 0.5;
+    --active-color: #4a90e2;
+    --hover-color: #5a9ae2;
 }
 
 [data-theme="dark"] {
     --bg-color: #1e1e1e;
-    --toolbar-bg: #252526;
-    --text-color: #e1e1e1;
-    --button-bg: #3c3c3c;
+    --toolbar-bg: #333333;
+    --text-color: #f0f0f0;
+    --button-bg: #444444;
     --button-hover: #505050;
     --button-active: #606060;
-    --border-color: #555;
-    --canvas-bg: #2d2d2d;
+    --border-color: #555555;
+    --canvas-bg: #222222;
     --disabled-opacity: 0.3;
+    --active-color: #61a0ff;
+    --hover-color: #70a8ff;
 }
 
 * {
@@ -30,10 +34,10 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-color: var(--bg-color);
+    background-color: var(--canvas-bg);
     color: var(--text-color);
     overflow: hidden;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -103,11 +107,13 @@ button {
 }
 
 button:hover {
-    background-color: var(--button-hover);
+    background-color: var(--hover-color);
+    color: white;
 }
 
 button.active {
-    background-color: var(--button-active);
+    background-color: var(--active-color);
+    color: white;
 }
 
 button.disabled {
@@ -135,8 +141,13 @@ button.disabled:hover {
     transition: border-color 0.3s ease;
 }
 
+.color-option:hover {
+    border-color: var(--hover-color);
+}
+
 .color-option.active {
-    border-color: var(--text-color);
+    border-color: var(--active-color);
+    transform: scale(1.1);
 }
 
 #whiteboard {
@@ -158,6 +169,57 @@ button.disabled:hover {
     font-size: 14px;
     color: var(--text-color);
     transition: color 0.3s ease;
+}
+
+/* Slides navigation styles */
+.slides-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.slides-navigation button {
+    font-size: 16px;
+    padding: 8px 12px;
+    width: auto;
+}
+
+#current-slide {
+    font-size: 14px;
+    color: var(--text-color);
+    padding: 5px 10px;
+    background-color: var(--button-bg);
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Recording styles */
+#record.recording {
+    background-color: #ff3b30;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Selection styles for touch devices */
+@media (hover: none) {
+    .handle {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 /* Responsive styles for mobile */

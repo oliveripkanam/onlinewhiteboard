@@ -17,6 +17,7 @@
                 <button id="circle">⭕ Circle</button>
                 <button id="line">📉 Line</button>
                 <button id="text">📝 Text</button>
+                <button id="select">👆 Select</button>
                 <button id="clear">🗑️ Clear All</button>
             </div>
             
@@ -25,6 +26,8 @@
                 <button id="undo">↩️ Undo (Ctrl+Z)</button>
                 <button id="redo">↪️ Redo (Ctrl+X)</button>
                 <button id="save">💾 Save (Ctrl+S)</button>
+                <button id="image-upload">🖼️ Add Image</button>
+                <button id="record">🔴 Record</button>
                 <button id="theme-switch">🌙 Dark Mode</button>
             </div>
             
@@ -46,6 +49,21 @@
                 <h3>Thickness</h3>
                 <input type="range" id="thickness" min="1" max="20" value="3">
                 <div id="thickness-value">3px</div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Display</h3>
+                <button id="grid-toggle">📏 Toggle Grid</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>Slides</h3>
+                <div class="slides-navigation">
+                    <button id="prev-slide">◀️</button>
+                    <span id="current-slide">1/1</span>
+                    <button id="next-slide">▶️</button>
+                </div>
+                <button id="add-slide">➕ New Slide</button>
             </div>
         </div>
         

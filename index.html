@@ -11,13 +11,14 @@
         <div class="toolbar">
             <div class="tool-section">
                 <h3>Tools</h3>
-                <button id="pen" class="active">✏️ Pen</button>
-                <button id="eraser">🧽 Eraser</button>
-                <button id="rectangle">📏 Rectangle</button>
-                <button id="circle">⭕ Circle</button>
-                <button id="line">📉 Line</button>
-                <button id="text">📝 Text</button>
-                <button id="select">👆 Select</button>
+                <button id="pen" class="active">✏️ Pen (P)</button>
+                <button id="eraser">🧽 Eraser (E)</button>
+                <button id="rectangle">📏 Rectangle (R)</button>
+                <button id="circle">⭕ Circle (C)</button>
+                <button id="line">📉 Line (L)</button>
+                <button id="text">📝 Text (T)</button>
+                <button id="select">👆 Select (S)</button>
+                <button id="fill-toggle">🎨 Fill: Off (F)</button>
                 <button id="clear">🗑️ Clear All</button>
             </div>
             
@@ -25,6 +26,7 @@
                 <h3>Actions</h3>
                 <button id="undo">↩️ Undo (Ctrl+Z)</button>
                 <button id="redo">↪️ Redo (Ctrl+X)</button>
+                <button id="delete-selected">🗑️ Delete Selected (Del)</button>
                 <button id="save">💾 Save (Ctrl+S)</button>
                 <button id="image-upload">🖼️ Add Image</button>
                 <button id="record">🔴 Record</button>
@@ -49,11 +51,16 @@
                 <h3>Thickness</h3>
                 <input type="range" id="thickness" min="1" max="20" value="3">
                 <div id="thickness-value">3px</div>
+                
+                <h3>Eraser Size</h3>
+                <input type="range" id="eraser-size" min="5" max="50" value="10">
+                <div id="eraser-size-value">10px</div>
             </div>
 
             <div class="tool-section">
                 <h3>Display</h3>
                 <button id="grid-toggle">📏 Toggle Grid</button>
+                <div class="tooltip">💡 Tip: Hold middle mouse button to pan around the canvas</div>
             </div>
 
             <div class="tool-section">

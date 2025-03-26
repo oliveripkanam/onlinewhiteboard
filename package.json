@@ -1,30 +1,19 @@
 {
-  "name": "online-whiteboard",
+  "name": "whiteboardly",
   "version": "1.0.0",
-  "description": "A whiteboard for tutoring lessons",
-  "main": "dist/script.js",
+  "description": "A collaborative whiteboard application with Google authentication",
+  "main": "index.html",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "start": "serve"
+    "dev": "serve",
+    "build": "tsc"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/oliveripkanam/onlinewhiteboard.git"
+  "dependencies": {
+    "faunadb": "^4.8.0",
+    "google-auth-library": "^8.7.0",
+    "mongodb": "^6.15.0"
   },
-  "keywords": [
-    "whiteboard",
-    "tutoring",
-    "typescript"
-  ],
-  "author": "oliveripkanam",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/oliveripkanam/onlinewhiteboard/issues"
-  },
-  "homepage": "https://github.com/oliveripkanam/onlinewhiteboard#readme",
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "serve": "^14.2.1"
+    "serve": "^14.2.0",
+    "typescript": "^5.0.4"
   }
-} 
+}

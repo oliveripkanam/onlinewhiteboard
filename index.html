@@ -5,9 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Whiteboard</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <div class="container">
+    <div id="login-container" class="login-container">
+        <div class="login-card">
+            <h1>Whiteboardly</h1>
+            <p>Sign in to access your whiteboards</p>
+            <div id="g_id_onload"
+                data-client_id="73818709117-rsd8h42cbu2obm6t2rbo9f8jc0ojdl8c.apps.googleusercontent.com"
+                data-callback="handleCredentialResponse"
+                data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin"
+                data-type="standard"
+                data-size="large"
+                data-theme="outline"
+                data-text="sign_in_with"
+                data-shape="rectangular"
+                data-logo_alignment="left">
+            </div>
+        </div>
+    </div>
+    
+    <div id="dashboard-container" style="display: none;" class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>My Whiteboards</h1>
+            <div class="user-profile">
+                <img id="user-avatar" src="" alt="User">
+                <span id="user-name"></span>
+                <button id="sign-out-btn">Sign Out</button>
+            </div>
+        </header>
+        
+        <div class="dashboard-actions">
+            <button id="create-whiteboard-btn" class="primary-button">+ New Whiteboard</button>
+        </div>
+        
+        <div id="whiteboards-grid" class="whiteboards-grid">
+            <!-- Whiteboards will be loaded here -->
+        </div>
+    </div>
+    
+    <div id="whiteboard-container" style="display: none;" class="container">
         <div class="toolbar">
             <div class="tool-section">
                 <h3>Tools</h3>
@@ -31,6 +71,7 @@
                 <button id="image-upload">🖼️ Add Image</button>
                 <button id="record">🔴 Record</button>
                 <button id="theme-switch">🌙 Dark Mode</button>
+                <button id="back-to-dashboard">📋 Dashboard</button>
             </div>
             
             <div class="tool-section">
@@ -78,5 +119,6 @@
     </div>
 
     <script src="dist/script.js"></script>
+    <script src="auth.js"></script>
 </body>
 </html> 

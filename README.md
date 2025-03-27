@@ -1,27 +1,55 @@
 # Online Whiteboard
 
-A collaborative drawing tool with Google authentication and cloud storage.
+A collaborative drawing tool with Google authentication and cloud storage. Create, edit, and share whiteboards with friends and colleagues in real-time.
 
 ## Features
 
-- Draw with pen, shapes, text, and more
+- Advanced drawing tools with support for various shapes and text
+- Object selection, editing, and manipulation with glow highlighting
 - Multiple pages with Jamboard-like navigation
-- Dark/light mode
-- Google login and cloud storage
-- Real-time collaboration
+- Google login and cloud storage for saving your work
+- Real-time collaboration capabilities
+- Responsive design that works on desktop and tablets
+- Image upload and manipulation support
+- Dark/light mode toggle
+
+## Drawing Tools
+
+- **Pen Tool**: Freehand drawing with adjustable thickness and color
+- **Shape Tools**:
+  - Rectangle: Create rectangles with fill or outline options
+  - Circle: Draw circles with customizable properties
+  - Line: Draw straight lines with adjustable thickness
+- **Text Tool**: Add text with customizable font and color
+- **Selection Tool**: Select objects by left-clicking or right-clicking anywhere
+  - Drag to move selected objects
+  - Manipulate individual or multiple objects
+  - Delete selected objects with Delete or Backspace key
+- **Eraser Tool**: Remove drawn objects with adjustable eraser size
+- **Image Tool**: Upload and place images on your whiteboard
+
+## Advanced Features
+
+- **Selection Highlighting**: Objects are highlighted with a glow effect that follows their exact contours
+- **Multi-select**: Hold Shift while selecting to add to your current selection
+- **Right-click Selection**: Use right-click to select objects regardless of current tool
+- **Object Movement**: Drag selected objects to reposition them
+- **Eraser Visual Trail**: See where your eraser will affect the canvas
+- **Toolbar Panels**: Tool options appear when hovering over toolbar icons
 
 ## Usage
 
 Visit [whiteboardly.netlify.app](https://whiteboardly.netlify.app) to use the whiteboard.
 
-### Drawing Tools
-- Pen (P): Free drawing
-- Eraser (E): Remove content
-- Rectangle (R): Draw rectangles
-- Circle (C): Draw circles
-- Line (L): Draw straight lines
-- Text (T): Add text
-- Select (S): Select and move objects
+### Keyboard Shortcuts
+- Pen (P): Activate the pen tool
+- Eraser (E): Activate the eraser tool
+- Rectangle (R): Activate the rectangle tool
+- Circle (C): Activate the circle tool
+- Line (L): Activate the line tool
+- Text (T): Activate the text tool
+- Select (S): Activate the selection tool
+- Delete/Backspace: Delete selected objects
 
 ### Page Navigation
 - Use the slide thumbnails at the bottom to switch between pages

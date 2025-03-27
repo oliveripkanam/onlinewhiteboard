@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolbar Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .toolbar {
+            width: 70px;
+            background-color: #f5f5f5;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+        .active {
+            background-color: #e0e0e0;
+        }
+        .toolbar-panel {
+            left: 70px;
+        }
+        .hidden {
+            display: none;
+        }
+        .hover\:bg-hover:hover {
+            background-color: #e0e0e0;
+        }
+        .bg-hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex">
+        <!-- Left Sidebar Toolbar -->
+        <div class="toolbar flex flex-col items-center py-4 shadow-md z-10">
+            <div class="toolbar-icons flex flex-col gap-4 w-full items-center">
+                <!-- Drawing Tools -->
+                <button data-panel="draw" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"></path>
+                    </svg>
+                </button>
+
+                <!-- Shapes -->
+                <button data-panel="shapes" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="16" height="16" x="4" y="4" rx="2"></rect>
+                    </svg>
+                </button>
+
+                <!-- Text -->
+                <button data-panel="text" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                        <line x1="9" x2="15" y1="20" y2="20"></line>
+                        <line x1="12" x2="12" y1="4" y2="20"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Whiteboard Area -->
+        <div id="whiteboard-area" class="flex-1 ml-[70px]">
+            <h1 class="text-2xl m-4">Toolbar Test</h1>
+            <div id="click-log" class="m-4 p-4 border rounded max-h-96 overflow-auto">
+                <h2 class="font-bold">Click Log:</h2>
+            </div>
+        </div>
+        
+        <!-- Panel Contents -->
+        <div id="draw-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Drawing Tools</h3>
+            <div class="panel-buttons flex flex-col gap-2">
+                <button id="pen" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">✏️</span> Pen (P)
+                </button>
+                <button id="eraser" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🧽</span> Eraser (E)
+                </button>
+            </div>
+        </div>
+
+        <div id="shapes-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Shapes</h3>
+            <div class="panel-buttons flex flex-col gap-2">
+                <button id="rectangle" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🔲</span> Rectangle (R)
+                </button>
+                <button id="circle" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">⭕</span> Circle (C)
+                </button>
+                <button id="line" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">📉</span> Line (L)
+                </button>
+            </div>
+        </div>
+
+        <div id="text-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Text</h3>
+            <div class="panel-buttons">
+                <button id="text" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">📝</span> Add Text (T)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Log element
+        const logElement = document.getElementById('click-log');
+        
+        function logClick(message) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry my-1 p-1 border-b';
+            entry.textContent = message;
+            logElement.appendChild(entry);
+            
+            // Scroll to bottom
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Add click event listeners to toolbar icons
+        document.querySelectorAll('.toolbar-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const panelId = this.getAttribute('data-panel') + '-panel';
+                logClick(`Clicked toolbar icon: ${this.getAttribute('data-panel')}`);
+                
+                // Close all panels
+                document.querySelectorAll('.toolbar-panel').forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                
+                // Remove active state from all icons
+                document.querySelectorAll('.toolbar-icon').forEach(i => {
+                    i.classList.remove('bg-hover');
+                });
+                
+                // Open clicked panel and set active state
+                const panel = document.getElementById(panelId);
+                if (panel) {
+                    panel.classList.remove('hidden');
+                    this.classList.add('bg-hover');
+                    logClick(`Opened panel: ${panelId}`);
+                }
+            });
+        });
+        
+        // Add click event listeners to panel buttons
+        document.querySelectorAll('.panel-buttons button').forEach(button => {
+            button.addEventListener('click', function() {
+                logClick(`Clicked tool button: ${this.id}`);
+                
+                // Update active state
+                document.querySelectorAll('.panel-buttons button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        
+        // Close panels when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.toolbar-icon') && !e.target.closest('.toolbar-panel')) {
+                document.querySelectorAll('.toolbar-panel').forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                document.querySelectorAll('.toolbar-icon').forEach(icon => {
+                    icon.classList.remove('bg-hover');
+                });
+                logClick('Clicked outside - closing panels');
+            }
+        });
+        
+        logClick('Page loaded - ready for testing');
+    </script>
+</body>
+</html> 

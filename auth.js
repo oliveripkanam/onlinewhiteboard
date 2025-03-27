@@ -41,6 +41,50 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backToDashboardBtn) {
         backToDashboardBtn.addEventListener('click', showDashboard);
     }
+    
+    // Set up filter dropdown
+    const filterButton = document.querySelector('.filter-button');
+    const filterDropdown = document.querySelector('.filter-dropdown-content');
+    const filterOptions = document.querySelectorAll('.filter-option');
+    
+    if (filterButton) {
+        filterButton.addEventListener('click', () => {
+            filterDropdown.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            if (!e.target.matches('.filter-button') && filterDropdown.classList.contains('show')) {
+                filterDropdown.classList.remove('show');
+            }
+        });
+        
+        // Handle filter option selection
+        filterOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Update selected state
+                filterOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                // Update button text
+                filterButton.textContent = option.querySelector('span:last-child').textContent;
+                
+                // Close dropdown
+                filterDropdown.classList.remove('show');
+                
+                // Apply filter
+                applyWhiteboardFilter(option.querySelector('span:last-child').textContent);
+            });
+        });
+    }
+    
+    // Set up refresh button
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            loadWhiteboards();
+        });
+    }
 });
 
 // Google Sign In Handler for new Google Identity Services
@@ -95,9 +139,23 @@ function signOut() {
     localStorage.removeItem('whiteboardly_user');
     
     // Return to login screen
-    loginContainer.style.display = 'flex';
-    dashboardContainer.style.display = 'none';
-    whiteboardContainer.style.display = 'none';
+    if (loginContainer) {
+        loginContainer.classList.remove('hidden');
+        loginContainer.classList.add('flex');
+        loginContainer.style.display = 'flex';
+    }
+    
+    if (dashboardContainer) {
+        dashboardContainer.classList.add('hidden');
+        dashboardContainer.classList.remove('flex');
+        dashboardContainer.style.display = 'none';
+    }
+    
+    if (whiteboardContainer) {
+        whiteboardContainer.classList.add('hidden');
+        whiteboardContainer.classList.remove('flex');
+        whiteboardContainer.style.display = 'none';
+    }
     
     // Reload the page to clear the Google Identity Services state
     window.location.reload();
@@ -105,14 +163,43 @@ function signOut() {
 
 // Shows the dashboard, hides other containers
 function showDashboard() {
-    if (!currentUser) return;
+    if (!currentUser && !isDevelopmentMode()) return;
     
-    loginContainer.style.display = 'none';
-    dashboardContainer.style.display = 'block';
-    whiteboardContainer.style.display = 'none';
+    // Ensure login container is hidden
+    if (loginContainer) {
+        loginContainer.classList.add('hidden');
+        loginContainer.classList.remove('flex');
+        loginContainer.style.display = 'none'; // Add explicit display none for reliability
+    }
+    
+    // Make dashboard visible
+    if (dashboardContainer) {
+        dashboardContainer.classList.remove('hidden');
+        dashboardContainer.classList.add('flex');
+        dashboardContainer.style.display = 'flex'; // Add explicit display flex for reliability
+    }
+    
+    // Hide whiteboard container
+    if (whiteboardContainer) {
+        whiteboardContainer.classList.add('hidden');
+        whiteboardContainer.classList.remove('flex');
+        whiteboardContainer.style.display = 'none'; // Add explicit display none for reliability
+    }
+    
+    console.log('[DEBUG] Dashboard should now be visible');
+    console.log('[DEBUG] Container classes:', 
+        'login:', loginContainer?.className,
+        'dashboard:', dashboardContainer?.className,
+        'whiteboard:', whiteboardContainer?.className
+    );
     
     // Refresh whiteboard list
     loadWhiteboards();
+}
+
+// Check if in development mode
+function isDevelopmentMode() {
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 }
 
 // Load whiteboards from server
@@ -123,7 +210,7 @@ async function loadWhiteboards() {
         showLoadingIndicator();
         
         // Check if we're in a local environment (localhost)
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isLocalhost = isDevelopmentMode();
         
         // If local, skip API call and use localStorage only
         if (isLocalhost) {
@@ -181,155 +268,313 @@ async function loadWhiteboards() {
     }
 }
 
-// Create a new whiteboard
-async function createNewWhiteboard() {
-    if (!currentUser) return;
+// Add the missing promptRenameWhiteboard function
+function promptRenameWhiteboard(whiteboardId, nameElement) {
+    // Find the whiteboard in the list
+    const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
+    if (!whiteboard) return;
     
-    try {
-        showLoadingIndicator();
-        
-        // Create new whiteboard object
-        const newWhiteboard = {
-            id: `wb-${Date.now()}`,
-            name: `Whiteboard ${userWhiteboards.length + 1}`,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            thumbnail: null
-        };
-        
-        // Check if we're in a local environment
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        
-        if (isLocalhost) {
-            console.log('Running in local development - using localStorage for new whiteboard');
-            // Just save to localStorage
-            newWhiteboard.isLocal = true;
-            userWhiteboards.push(newWhiteboard);
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.id = 'rename-modal';
+    
+    // Create modal content
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Rename Whiteboard</h3>
+            <input type="text" id="new-whiteboard-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary" 
+                value="${whiteboard.name}" placeholder="Enter whiteboard name">
+            <div class="mt-4 flex justify-end gap-2">
+                <button id="cancel-rename" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                    Cancel
+                </button>
+                <button id="confirm-rename" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-dark">
+                    Rename
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(modal);
+    
+    // Focus the input
+    setTimeout(() => {
+        const input = document.getElementById('new-whiteboard-name');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }, 50);
+    
+    // Handle cancel button
+    document.getElementById('cancel-rename').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    // Handle confirm button
+    document.getElementById('confirm-rename').addEventListener('click', async () => {
+        const newName = document.getElementById('new-whiteboard-name').value.trim();
+        if (newName && newName !== whiteboard.name) {
+            // Update whiteboard name
+            whiteboard.name = newName;
+            whiteboard.updatedAt = new Date().toISOString();
+            
+            // Update UI immediately
+            if (nameElement) {
+                nameElement.textContent = newName;
+            }
+            
+            // Check if we're in local environment
+            const isLocalhost = isDevelopmentMode();
+            
+            // Always save to localStorage
             localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
-            openWhiteboard(newWhiteboard.id);
-            hideLoadingIndicator();
-            return;
+            
+            // If not local or local whiteboard, send to server
+            if (!isLocalhost && !whiteboard.isLocal) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/saveWhiteboard`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentUser.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            whiteboard: whiteboard,
+                            content: null
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error renaming whiteboard: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    console.error('Error renaming whiteboard:', error);
+                    showError('Failed to rename whiteboard on server. Changes saved locally.');
+                }
+            }
         }
         
-        // Production - send to server
-        const response = await fetch(`${API_BASE_URL}/saveWhiteboard`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${currentUser.token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ whiteboard: newWhiteboard, content: null })
+        // Remove modal
+        document.body.removeChild(modal);
+    });
+    
+    // Handle Enter key in input
+    document.getElementById('new-whiteboard-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('confirm-rename').click();
+        } else if (e.key === 'Escape') {
+            document.getElementById('cancel-rename').click();
+        }
+    });
+}
+
+// Modify createNewWhiteboard to use a popup
+async function createNewWhiteboard() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.id = 'create-whiteboard-modal';
+    
+    // Create modal content
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Whiteboard</h3>
+            <input type="text" id="new-whiteboard-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary" 
+                value="Untitled Whiteboard" placeholder="Enter whiteboard name">
+            <div class="mt-4 flex justify-end gap-2">
+                <button id="cancel-create" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                    Cancel
+                </button>
+                <button id="confirm-create" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-dark">
+                    Create
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(modal);
+    
+    // Focus the input
+    setTimeout(() => {
+        const input = document.getElementById('new-whiteboard-name');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }, 50);
+    
+    // Return a promise that resolves when the user confirms
+    return new Promise((resolve, reject) => {
+        // Handle cancel button
+        document.getElementById('cancel-create').addEventListener('click', () => {
+            document.body.removeChild(modal);
+            resolve(null); // User cancelled
         });
         
-        if (!response.ok) {
-            throw new Error(`Error creating whiteboard: ${response.statusText}`);
-        }
+        // Handle confirm button
+        document.getElementById('confirm-create').addEventListener('click', async () => {
+            const whiteboardName = document.getElementById('new-whiteboard-name').value.trim() || "Untitled Whiteboard";
+            document.body.removeChild(modal);
+            
+            try {
+                showLoadingIndicator();
+                
+                const isLocalhost = isDevelopmentMode();
+                let newWhiteboard;
+                
+                // Create local whiteboard object
+                newWhiteboard = {
+                    id: 'wb_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
+                    name: whiteboardName,
+                    owner: currentUser?.id || 'local_user',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    isLocal: isLocalhost,
+                    content: null,
+                    thumbnail: null
+                };
+                
+                // Add to user's whiteboards
+                userWhiteboards.push(newWhiteboard);
+                
+                // Save to localStorage (for both local and production for offline capability)
+                localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
+                
+                // Only call API if not in local mode
+                if (!isLocalhost) {
+                    const response = await fetch(`${API_BASE_URL}/saveWhiteboard`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentUser.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            whiteboard: newWhiteboard,
+                            content: null
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error saving whiteboard: ${response.statusText}`);
+                    }
+                    
+                    // Get updated whiteboard with server ID
+                    const data = await response.json();
+                    if (data.whiteboard && data.whiteboard.id) {
+                        // Update the local copy with server ID
+                        const index = userWhiteboards.findIndex(wb => wb.id === newWhiteboard.id);
+                        if (index !== -1) {
+                            userWhiteboards[index] = data.whiteboard;
+                            localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
+                        }
+                        newWhiteboard = data.whiteboard;
+                    }
+                }
+                
+                // Re-render the whiteboards list
+                renderWhiteboardsList();
+                
+                // Open the newly created whiteboard
+                openWhiteboard(newWhiteboard.id);
+                resolve(newWhiteboard);
+                
+            } catch (error) {
+                console.error('Error creating whiteboard:', error);
+                showError('Failed to create new whiteboard. Please try again.');
+                reject(error);
+            } finally {
+                hideLoadingIndicator();
+            }
+        });
         
-        const data = await response.json();
-        
-        // Add to local array
-        userWhiteboards.push(data.whiteboard || newWhiteboard);
-        
-        // Also save to localStorage as backup
-        localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
-        
-        // Open the new whiteboard
-        openWhiteboard(newWhiteboard.id);
-    } catch (error) {
-        console.error('Error creating whiteboard:', error);
-        showError('Creating local whiteboard instead');
-        
-        // Fallback: create a local whiteboard only
-        const newWhiteboard = {
-            id: `local-${Date.now()}`,
-            name: `Whiteboard ${userWhiteboards.length + 1}`,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            thumbnail: null,
-            isLocal: true
-        };
-        
-        userWhiteboards.push(newWhiteboard);
-        localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
-        
-        // Refresh the display
-        renderWhiteboardsList();
-    } finally {
-        hideLoadingIndicator();
-    }
+        // Handle Enter key in input
+        document.getElementById('new-whiteboard-name').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('confirm-create').click();
+            } else if (e.key === 'Escape') {
+                document.getElementById('cancel-create').click();
+            }
+        });
+    });
 }
 
 // Open a whiteboard
 async function openWhiteboard(whiteboardId) {
-    if (!currentUser || !whiteboardId) return;
+    if (!whiteboardId) {
+        console.error('No whiteboard ID provided');
+        return;
+    }
+    
+    console.log('Opening whiteboard:', whiteboardId);
     
     try {
         showLoadingIndicator();
         
-        const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
-        if (!whiteboard) {
-            throw new Error(`Whiteboard not found: ${whiteboardId}`);
+        // Show the whiteboard container and hide login/dashboard
+        if (loginContainer) {
+            loginContainer.classList.add('hidden');
+            loginContainer.classList.remove('flex');
+            loginContainer.style.display = 'none';
         }
         
-        // Check if we're in local development
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        let whiteboardContent = null;
-        
-        // For local development or local whiteboards, use localStorage
-        if (isLocalhost || whiteboard.isLocal) {
-            console.log('Using localStorage for whiteboard content in development mode');
-            whiteboardContent = localStorage.getItem(`whiteboard_content_${whiteboardId}`);
-            
-            // Set current whiteboard in our main app
-            if (window.whiteboardApp) {
-                window.whiteboardApp.loadWhiteboardContent(whiteboardId, whiteboardContent);
-            }
-            
-            // Show whiteboard UI
+        if (dashboardContainer) {
+            dashboardContainer.classList.add('hidden');
+            dashboardContainer.classList.remove('flex');
             dashboardContainer.style.display = 'none';
+        }
+        
+        if (whiteboardContainer) {
+            whiteboardContainer.classList.remove('hidden');
+            whiteboardContainer.classList.add('flex');
             whiteboardContainer.style.display = 'flex';
-            hideLoadingIndicator();
+        }
+        
+        console.log('[DEBUG] Container visibility after opening whiteboard:',
+            'login:', loginContainer?.style.display,
+            'dashboard:', dashboardContainer?.style.display,
+            'whiteboard:', whiteboardContainer?.style.display
+        );
+        
+        // Check if we're in a local environment
+        const isLocalhost = isDevelopmentMode();
+        
+        // Find the whiteboard in our local array
+        const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
+        
+        if (!whiteboard) {
+            console.error('Whiteboard not found:', whiteboardId);
+            showError('Whiteboard not found');
             return;
         }
         
-        // If we're in production, try to fetch from server
-        // Fetch content from server
-        const response = await fetch(`${API_BASE_URL}/getWhiteboardContent?id=${whiteboardId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${currentUser.token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error fetching whiteboard content: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        whiteboardContent = data.content;
-        
-        // Set current whiteboard in our main app
+        // Initialize whiteboard with content
         if (window.whiteboardApp) {
-            window.whiteboardApp.loadWhiteboardContent(whiteboardId, whiteboardContent);
+            window.whiteboardApp.currentWhiteboardId = whiteboardId;
+            
+            // Force canvas size update
+            if (window.whiteboardApp.canvas) {
+                window.whiteboardApp.canvas.width = window.whiteboardApp.canvas.clientWidth;
+                window.whiteboardApp.canvas.height = window.whiteboardApp.canvas.clientHeight;
+            }
+            
+            // Reset view to ensure no offset when opening
+            if (typeof window.whiteboardApp.resetView === 'function') {
+                window.whiteboardApp.resetView();
+            }
+            
+            console.log('Whiteboard initialized with ID:', whiteboardId);
+        } else {
+            console.error('Whiteboard app not initialized');
+            alert('Error: Whiteboard app not initialized');
         }
-        
-        // Show whiteboard UI
-        dashboardContainer.style.display = 'none';
-        whiteboardContainer.style.display = 'flex';
         
     } catch (error) {
         console.error('Error opening whiteboard:', error);
-        showError('Failed to open the whiteboard. Using local storage as fallback.');
-        
-        // Try from localStorage as last resort
-        const whiteboardContent = localStorage.getItem(`whiteboard_content_${whiteboardId}`);
-        
-        if (window.whiteboardApp) {
-            window.whiteboardApp.loadWhiteboardContent(whiteboardId, whiteboardContent || null);
-            dashboardContainer.style.display = 'none';
-            whiteboardContainer.style.display = 'flex';
-        }
+        showError('Failed to open whiteboard');
     } finally {
         hideLoadingIndicator();
     }
@@ -350,7 +595,7 @@ async function saveWhiteboard(whiteboardId, content, thumbnail) {
         whiteboard.thumbnail = thumbnail;
         
         // Check if we're in local environment
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isLocalhost = isDevelopmentMode();
         
         // Always save to localStorage
         localStorage.setItem(`whiteboard_content_${whiteboardId}`, content);
@@ -398,10 +643,6 @@ async function saveWhiteboard(whiteboardId, content, thumbnail) {
 async function deleteWhiteboard(whiteboardId) {
     if (!currentUser || !whiteboardId) return;
     
-    if (!confirm('Are you sure you want to delete this whiteboard? This action cannot be undone.')) {
-        return;
-    }
-    
     try {
         showLoadingIndicator();
         
@@ -448,172 +689,274 @@ async function deleteWhiteboard(whiteboardId) {
     }
 }
 
-// Render the whiteboards list
+// Render whiteboards list in the dashboard
 function renderWhiteboardsList() {
     if (!whiteboardsGrid) return;
     
+    // Clear the grid
     whiteboardsGrid.innerHTML = '';
     
-    if (!userWhiteboards || userWhiteboards.length === 0) {
-        whiteboardsGrid.innerHTML = '<div class="empty-state">No whiteboards yet. Create your first one!</div>';
-        return;
-    }
+    // Add "Create New" button first
+    const createNewCard = document.createElement('div');
+    createNewCard.className = 'whiteboard-card bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center p-4 hover:bg-gray-100 transition-colors cursor-pointer min-h-[150px]';
+    createNewCard.innerHTML = `
+        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+        </div>
+        <span class="text-sm font-medium text-gray-800">Create new whiteboard</span>
+    `;
+    createNewCard.addEventListener('click', createNewWhiteboard);
+    whiteboardsGrid.appendChild(createNewCard);
     
-    userWhiteboards.forEach(whiteboard => {
+    // Sort whiteboards by updated date (newest first)
+    const sortedWhiteboards = [...userWhiteboards].sort((a, b) => {
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+    });
+    
+    // Add each whiteboard card
+    sortedWhiteboards.forEach(whiteboard => {
         const card = document.createElement('div');
-        card.className = 'whiteboard-card';
-        card.dataset.id = whiteboard.id;
+        card.className = 'whiteboard-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow';
+        
+        // Thumbnail container (maintains aspect ratio)
+        const thumbnailContainer = document.createElement('div');
+        thumbnailContainer.className = 'h-24 bg-gray-50 relative overflow-hidden';
         
         const thumbnail = document.createElement('div');
-        thumbnail.className = 'thumbnail';
+        thumbnail.className = 'absolute inset-0 flex items-center justify-center';
+        
         if (whiteboard.thumbnail) {
-            thumbnail.style.backgroundImage = `url(${whiteboard.thumbnail})`;
+            const img = document.createElement('img');
+            img.src = whiteboard.thumbnail;
+            img.className = 'w-full h-full object-contain';
+            thumbnail.appendChild(img);
         } else {
-            thumbnail.classList.add('empty-thumbnail');
+            thumbnail.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2z" />
+                </svg>
+            `;
         }
         
-        const info = document.createElement('div');
-        info.className = 'info';
+        thumbnailContainer.appendChild(thumbnail);
+        card.appendChild(thumbnailContainer);
         
-        const name = document.createElement('h3');
-        name.textContent = whiteboard.name;
+        // Whiteboard info
+        const infoContainer = document.createElement('div');
+        infoContainer.className = 'p-3';
         
-        const date = document.createElement('p');
-        date.className = 'date';
-        const formattedDate = new Date(whiteboard.updatedAt).toLocaleDateString();
-        date.textContent = `Updated: ${formattedDate}`;
+        const nameWrapper = document.createElement('div');
+        nameWrapper.className = 'flex items-center justify-between';
         
-        const actions = document.createElement('div');
-        actions.className = 'actions';
+        const nameElement = document.createElement('h3');
+        nameElement.className = 'whiteboard-name text-sm font-medium text-gray-800 truncate';
+        nameElement.textContent = whiteboard.name;
         
-        const editBtn = document.createElement('button');
-        editBtn.textContent = 'Open';
-        editBtn.className = 'open-btn';
-        editBtn.addEventListener('click', () => openWhiteboard(whiteboard.id));
+        const editIcon = document.createElement('button');
+        editIcon.className = 'upload-image-btn ml-2 text-gray-400 hover:text-gray-600';
+        editIcon.title = 'Upload image to whiteboard';
+        editIcon.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        `;
         
-        const renameBtn = document.createElement('button');
-        renameBtn.textContent = 'Rename';
-        renameBtn.className = 'rename-btn';
-        renameBtn.addEventListener('click', (e) => {
+        nameWrapper.appendChild(nameElement);
+        nameWrapper.appendChild(editIcon);
+        infoContainer.appendChild(nameWrapper);
+        
+        // Date info
+        const dateInfo = document.createElement('p');
+        dateInfo.className = 'text-xs text-gray-500 mt-1';
+        const updateDate = new Date(whiteboard.updatedAt);
+        dateInfo.textContent = `Last edited: ${updateDate.toLocaleDateString()}`;
+        infoContainer.appendChild(dateInfo);
+        
+        // Action buttons
+        const actionsContainer = document.createElement('div');
+        actionsContainer.className = 'flex gap-2 mt-3';
+        
+        const openButton = document.createElement('button');
+        openButton.className = 'flex-1 inline-flex justify-center items-center px-3 py-1.5 bg-primary text-white text-xs font-medium rounded hover:bg-primary-dark transition-colors';
+        openButton.textContent = 'Open';
+        openButton.addEventListener('click', () => openWhiteboard(whiteboard.id));
+        actionsContainer.appendChild(openButton);
+        
+        const renameButton = document.createElement('button');
+        renameButton.className = 'inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 text-gray-700 text-xs font-medium rounded hover:bg-gray-50 transition-colors';
+        renameButton.textContent = 'Rename';
+        renameButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            renameWhiteboard(whiteboard.id);
+            promptRenameWhiteboard(whiteboard.id, nameElement);
         });
+        actionsContainer.appendChild(renameButton);
         
-        info.appendChild(name);
-        info.appendChild(date);
-        actions.appendChild(editBtn);
-        actions.appendChild(renameBtn);
-        info.appendChild(actions);
-        
-        card.appendChild(thumbnail);
-        card.appendChild(info);
-        
-        card.addEventListener('click', (e) => {
-            if (!e.target.closest('button')) {
-                openWhiteboard(whiteboard.id);
-            }
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'inline-flex justify-center items-center px-2 py-1.5 text-red-500 hover:text-red-700 transition-colors';
+        deleteButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        `;
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            confirmDeleteWhiteboard(whiteboard.id);
         });
+        actionsContainer.appendChild(deleteButton);
         
+        infoContainer.appendChild(actionsContainer);
+        card.appendChild(infoContainer);
+        
+        // Add to grid
         whiteboardsGrid.appendChild(card);
+        
+        // Add image upload functionality
+        editIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            uploadImageToWhiteboard(whiteboard.id);
+        });
     });
 }
 
-// Rename whiteboard function
-async function renameWhiteboard(whiteboardId) {
-    if (!currentUser || !whiteboardId) return;
-    
-    try {
-        const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
-        if (!whiteboard) {
-            throw new Error(`Whiteboard not found: ${whiteboardId}`);
-        }
-        
-        // Prompt for new name
-        const newName = prompt('Enter a new name for this whiteboard:', whiteboard.name);
-        if (!newName || newName.trim() === '') return;
-        
-        // Update whiteboard name
-        whiteboard.name = newName.trim();
-        whiteboard.updatedAt = new Date().toISOString();
-        
-        // Check if we're in local environment
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        
-        // Always save to localStorage
-        localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
-        
-        // If local environment or a local whiteboard, don't send to server
-        if (isLocalhost || whiteboard.isLocal) {
-            console.log('Updating whiteboard name in localStorage only (development mode)');
-            renderWhiteboardsList();
-            return;
-        }
-        
-        // Production - update on server
-        const response = await fetch(`${API_BASE_URL}/saveWhiteboard`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${currentUser.token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                whiteboard: whiteboard,
-                content: null
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error renaming whiteboard: ${response.statusText}`);
-        }
-        
-        // Re-render the whiteboards list
-        renderWhiteboardsList();
-        
-    } catch (error) {
-        console.error('Error renaming whiteboard:', error);
-        showError('Failed to rename the whiteboard. Changes saved locally only.');
-    }
+// Generate a random pastel color for thumbnails without images
+function getRandomPastelColor() {
+    const hue = Math.floor(Math.random() * 360);
+    return `hsl(${hue}, 70%, 85%)`;
 }
 
-// UI Helpers
+// Show loading indicator
 function showLoadingIndicator() {
-    // Check if loading indicator already exists
-    let loader = document.getElementById('loading-indicator');
-    
-    if (!loader) {
-        loader = document.createElement('div');
-        loader.id = 'loading-indicator';
-        loader.innerHTML = '<div class="spinner"></div>';
-        document.body.appendChild(loader);
+    const loadingEl = document.getElementById('loading-indicator');
+    if (loadingEl) {
+        loadingEl.classList.remove('hidden');
     }
-    
-    loader.style.display = 'flex';
 }
 
+// Hide loading indicator
 function hideLoadingIndicator() {
-    const loader = document.getElementById('loading-indicator');
-    if (loader) {
-        loader.style.display = 'none';
+    const loadingEl = document.getElementById('loading-indicator');
+    if (loadingEl) {
+        loadingEl.classList.add('hidden');
     }
 }
 
+// Show error message
 function showError(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
-    
-    document.body.appendChild(errorDiv);
-    
-    setTimeout(() => {
-        errorDiv.classList.add('fade-out');
+    const errorEl = document.getElementById('error-message');
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+        
+        // Auto-hide after 5 seconds
         setTimeout(() => {
-            errorDiv.remove();
-        }, 500);
-    }, 3000);
+            errorEl.classList.add('hidden');
+        }, 5000);
+    }
 }
 
 // Expose methods to be used by the whiteboard app
 window.whiteboardDashboard = {
     saveWhiteboard,
     showDashboard
-}; 
+};
+
+// Apply filter to whiteboards
+function applyWhiteboardFilter(filterText) {
+    // For this demo, we're just reloading all whiteboards
+    // In a real app, you'd filter based on ownership
+    loadWhiteboards();
+}
+
+// Add the missing confirmDeleteWhiteboard function
+function confirmDeleteWhiteboard(whiteboardId) {
+    // Find the whiteboard in the list
+    const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
+    if (!whiteboard) return;
+    
+    // Ask for confirmation before deleting
+    const confirmMessage = `Are you sure you want to delete "${whiteboard.name}"?`;
+    if (confirm(confirmMessage)) {
+        // If user confirms, delete the whiteboard
+        deleteWhiteboard(whiteboardId);
+    }
+}
+
+// Add image upload handler function
+async function uploadImageToWhiteboard(whiteboardId) {
+    // Find the whiteboard
+    const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
+    if (!whiteboard) return;
+    
+    // Create an input element for file selection
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*'; // Accept all image types
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    
+    // Handle file selection
+    fileInput.onchange = async (event) => {
+        try {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Show loading indicator
+            showLoadingIndicator();
+            
+            // Create a unique ID for the image
+            const imageId = `img_${Date.now()}`;
+            
+            // Read the file as a data URL
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const imageData = e.target.result;
+                    
+                    // Open the whiteboard to add the image
+                    await openWhiteboard(whiteboardId);
+                    
+                    // Add image to whiteboard after it's loaded
+                    // We need to wait for the whiteboard to initialize
+                    setTimeout(() => {
+                        if (window.whiteboardApp && typeof window.whiteboardApp.addImage === 'function') {
+                            window.whiteboardApp.addImage(imageData);
+                            console.log('Image added to whiteboard:', imageId);
+                        } else {
+                            console.error('Whiteboard app not initialized or addImage method not available');
+                            showError('Unable to add image to whiteboard. Try again later.');
+                        }
+                        hideLoadingIndicator();
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Error adding image to whiteboard:', error);
+                    showError('Failed to add image to whiteboard');
+                    hideLoadingIndicator();
+                }
+            };
+            
+            // Error handling for file reading
+            reader.onerror = function() {
+                console.error('Error reading file');
+                showError('Error reading image file');
+                hideLoadingIndicator();
+            };
+            
+            // Start reading the file
+            reader.readAsDataURL(file);
+            
+        } catch (error) {
+            console.error('Error handling file upload:', error);
+            showError('Error uploading image');
+            hideLoadingIndicator();
+        } finally {
+            // Clean up
+            document.body.removeChild(fileInput);
+        }
+    };
+    
+    // Trigger file selection dialog
+    fileInput.click();
+} 

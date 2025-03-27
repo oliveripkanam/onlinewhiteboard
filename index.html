@@ -3,21 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Whiteboard</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Whiteboardly</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4285f4',
+                        sidebar: '#f5f5f5',
+                        hover: '#e0e0e0',
+                        divider: '#dadce0'
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div id="login-container" class="login-container">
-        <div class="login-card">
-            <h1>Whiteboardly</h1>
-            <p>Sign in to access your whiteboards</p>
+<body class="bg-gray-50 m-0 p-0 h-screen w-screen overflow-hidden">
+    <!-- Login Container -->
+    <div id="login-container" class="flex items-center justify-center min-h-screen bg-gray-50">
+        <div class="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
+            <h1 class="text-2xl font-medium text-gray-800 mb-2">Whiteboardly</h1>
+            <p class="text-gray-600 mb-6">Sign in to access your whiteboards</p>
             <div id="g_id_onload"
                 data-client_id="73818709117-rsd8h42cbu2obm6t2rbo9f8jc0ojdl8c.apps.googleusercontent.com"
                 data-callback="handleCredentialResponse"
                 data-auto_prompt="false">
             </div>
-            <div class="g_id_signin"
+            <div class="g_id_signin mt-4"
                 data-type="standard"
                 data-size="large"
                 data-theme="outline"
@@ -28,97 +43,470 @@
         </div>
     </div>
     
-    <div id="dashboard-container" style="display: none;" class="dashboard-container">
-        <header class="dashboard-header">
-            <h1>My Whiteboards</h1>
-            <div class="user-profile">
-                <img id="user-avatar" src="" alt="User">
-                <span id="user-name"></span>
-                <button id="sign-out-btn">Sign Out</button>
+    <!-- Dashboard Container -->
+    <div id="dashboard-container" class="hidden flex flex-col h-screen w-screen bg-gray-50">
+        <header class="flex items-center justify-between h-16 px-4 bg-white border-b border-divider">
+            <div class="flex items-center">
+                <button class="text-gray-500 mr-4">☰</button>
+                <h1 class="text-xl font-normal text-gray-600">Whiteboardly</h1>
+            </div>
+            <div class="flex items-center">
+                <button id="refresh-btn" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600 mr-2" title="Refresh">↻</button>
+                <div class="flex items-center">
+                    <img id="user-avatar" src="" alt="User" class="w-8 h-8 rounded-full mr-3">
+                    <span id="user-name" class="text-gray-700 mr-4"></span>
+                    <button id="sign-out-btn" class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">Sign Out</button>
+                </div>
             </div>
         </header>
         
-        <div class="dashboard-actions">
-            <button id="create-whiteboard-btn" class="primary-button">+ New Whiteboard</button>
+        <div class="flex items-center px-6 py-4 bg-gray-50">
+            <div class="ml-auto relative">
+                <button class="filter-button flex items-center px-4 py-2 bg-white border border-gray-200 rounded text-gray-700 text-sm">
+                    Owned by me
+                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div class="filter-dropdown-content hidden absolute right-0 top-10 bg-white rounded shadow-lg min-w-[200px] z-50">
+                    <div class="filter-option selected p-3 hover:bg-gray-100 cursor-pointer flex items-center">
+                        <span class="checkmark mr-2">✓</span>
+                        <span>Owned by me</span>
+                    </div>
+                    <div class="filter-option p-3 hover:bg-gray-100 cursor-pointer flex items-center">
+                        <span class="checkmark mr-2 invisible">✓</span>
+                        <span>Not owned by me</span>
+                    </div>
+                    <div class="filter-option p-3 hover:bg-gray-100 cursor-pointer flex items-center">
+                        <span class="checkmark mr-2 invisible">✓</span>
+                        <span>Owned by anyone</span>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div id="whiteboards-grid" class="whiteboards-grid">
+        <div id="whiteboards-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6 overflow-y-auto">
+            <!-- New whiteboard card -->
+            <div id="create-whiteboard-btn" class="cursor-pointer border-2 border-dashed border-gray-300 bg-white rounded-lg flex flex-col items-center justify-center h-56 hover:bg-gray-50 transition-colors">
+                <div class="text-5xl text-primary mb-2">+</div>
+                <div class="text-sm text-gray-600">New whiteboard</div>
+            </div>
             <!-- Whiteboards will be loaded here -->
         </div>
     </div>
     
-    <div id="whiteboard-container" style="display: none;" class="container">
-        <div class="toolbar">
-            <div class="tool-section">
-                <h3>Tools</h3>
-                <button id="pen" class="active">✏️ Pen (P)</button>
-                <button id="eraser">🧽 Eraser (E)</button>
-                <button id="rectangle">📏 Rectangle (R)</button>
-                <button id="circle">⭕ Circle (C)</button>
-                <button id="line">📉 Line (L)</button>
-                <button id="text">📝 Text (T)</button>
-                <button id="select">👆 Select (S)</button>
-                <button id="fill-toggle">🎨 Fill: Off (F)</button>
-                <button id="clear">🗑️ Clear All</button>
-            </div>
-            
-            <div class="tool-section">
-                <h3>Actions</h3>
-                <button id="undo">↩️ Undo (Ctrl+Z)</button>
-                <button id="redo">↪️ Redo (Ctrl+X)</button>
-                <button id="delete-selected">🗑️ Delete Selected (Del)</button>
-                <button id="save">💾 Save (Ctrl+S)</button>
-                <button id="image-upload">🖼️ Add Image</button>
-                <button id="record">🔴 Record</button>
-                <button id="theme-switch">🌙 Dark Mode</button>
-                <button id="back-to-dashboard">📋 Dashboard</button>
-            </div>
-            
-            <div class="tool-section">
-                <h3>Color</h3>
-                <div class="color-picker">
-                    <div class="color-option" data-color="#000000" style="background-color: #000000;"></div>
-                    <div class="color-option" data-color="#FF0000" style="background-color: #FF0000;"></div>
-                    <div class="color-option" data-color="#00FF00" style="background-color: #00FF00;"></div>
-                    <div class="color-option" data-color="#0000FF" style="background-color: #0000FF;"></div>
-                    <div class="color-option" data-color="#FFFF00" style="background-color: #FFFF00;"></div>
-                    <div class="color-option" data-color="#FF00FF" style="background-color: #FF00FF;"></div>
-                    <div class="color-option" data-color="#00FFFF" style="background-color: #00FFFF;"></div>
-                    <div class="color-option" data-color="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #ccc;"></div>
-                </div>
-            </div>
-            
-            <div class="tool-section">
-                <h3>Thickness</h3>
-                <input type="range" id="thickness" min="1" max="20" value="3">
-                <div id="thickness-value">3px</div>
+    <!-- Whiteboard Container -->
+    <div id="whiteboard-container" class="hidden flex h-screen w-screen overflow-hidden">
+        <!-- Minimalist Sidebar -->
+        <div class="w-[60px] bg-sidebar border-r border-divider flex flex-col items-center py-4 relative">
+            <div class="toolbar-icons flex flex-col gap-4 w-full items-center">
+                <!-- Drawing Tools -->
+                <button data-panel="draw" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover active:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"></path>
+                    </svg>
+                </button>
                 
-                <h3>Eraser Size</h3>
-                <input type="range" id="eraser-size" min="5" max="50" value="10">
-                <div id="eraser-size-value">10px</div>
+                <!-- Shapes -->
+                <button data-panel="shapes" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="16" height="16" x="4" y="4" rx="2"></rect>
+                    </svg>
+                </button>
+                
+                <!-- Text -->
+                <button data-panel="text" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                        <line x1="9" x2="15" y1="20" y2="20"></line>
+                        <line x1="12" x2="12" y1="4" y2="20"></line>
+                    </svg>
+                </button>
+                
+                <!-- Select/Move -->
+                <button data-panel="select" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
+                        <path d="m13 13 6 6"></path>
+                    </svg>
+                </button>
+                
+                <div class="w-8 h-px bg-gray-300 my-1"></div>
+                
+                <!-- Actions -->
+                <button data-panel="actions" class="toolbar-icon w-10 h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-hover">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="19" cy="12" r="1"></circle>
+                        <circle cx="5" cy="12" r="1"></circle>
+                    </svg>
+                </button>
             </div>
-
-            <div class="tool-section">
-                <h3>Display</h3>
-                <button id="grid-toggle">📏 Toggle Grid</button>
-                <div class="tooltip">💡 Tip: Hold middle mouse button to pan around the canvas</div>
-            </div>
-
-            <div class="tool-section">
-                <h3>Slides</h3>
-                <div class="slides-navigation">
-                    <button id="prev-slide">◀️</button>
-                    <span id="current-slide">1/1</span>
-                    <button id="next-slide">▶️</button>
-                </div>
-                <button id="add-slide">➕ New Slide</button>
+            
+            <!-- User Profile at Bottom -->
+            <div class="absolute bottom-4 w-10 h-10">
+                <img id="sidebar-user-avatar" src="" alt="User" class="w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-300">
             </div>
         </div>
         
-        <canvas id="whiteboard"></canvas>
+        <!-- Expandable Panels -->
+        <div id="draw-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Drawing Tools</h3>
+            <div class="panel-section mb-5">
+                <div class="panel-buttons flex flex-col gap-2">
+                    <button id="pen" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                        <span class="text-lg">✏️</span> Pen (P)
+                    </button>
+                    <button id="eraser" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                        <span class="text-lg">🧽</span> Eraser (E)
+                    </button>
+                </div>
+            </div>
+            
+            <div class="panel-section mb-5">
+                <h4 class="text-sm text-gray-600 mb-2">Color</h4>
+                <div class="color-picker flex flex-wrap gap-2">
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400" data-color="#000000" style="background-color: #000000;"></div>
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400" data-color="#FF0000" style="background-color: #FF0000;"></div>
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400" data-color="#00FF00" style="background-color: #00FF00;"></div>
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400" data-color="#0000FF" style="background-color: #0000FF;"></div>
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400" data-color="#FFFF00" style="background-color: #FFFF00;"></div>
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400" data-color="#FF00FF" style="background-color: #FF00FF;"></div>
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400" data-color="#00FFFF" style="background-color: #00FFFF;"></div>
+                    <div class="color-option w-6 h-6 rounded-full cursor-pointer border-2 border-transparent hover:border-gray-400 border" data-color="#FFFFFF" style="background-color: #FFFFFF;"></div>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h4 class="text-sm text-gray-600 mb-2">Thickness</h4>
+                <input type="range" id="thickness" min="1" max="20" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <div id="thickness-value" class="text-xs text-gray-600 text-right mt-1">3px</div>
+            </div>
+        </div>
+        
+        <div id="shapes-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Shapes</h3>
+            <div class="panel-buttons flex flex-col gap-2">
+                <button id="rectangle" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">📏</span> Rectangle (R)
+                </button>
+                <button id="circle" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">⭕</span> Circle (C)
+                </button>
+                <button id="line" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">📉</span> Line (L)
+                </button>
+                <button id="fill-toggle" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🎨</span> Fill: Off (F)
+                </button>
+            </div>
+        </div>
+        
+        <div id="text-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Text</h3>
+            <div class="panel-buttons">
+                <button id="text" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">📝</span> Add Text (T)
+                </button>
+            </div>
+        </div>
+        
+        <div id="select-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Select & Edit</h3>
+            <div class="panel-buttons flex flex-col gap-2">
+                <button id="select" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">👆</span> Select (S)
+                </button>
+                <button id="delete-selected" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🗑️</span> Delete Selected (Del)
+                </button>
+            </div>
+        </div>
+        
+        <div id="actions-panel" class="toolbar-panel hidden absolute left-[70px] top-4 w-64 bg-white rounded-lg shadow-lg p-4 z-50">
+            <h3 class="text-base font-medium mb-4 text-gray-800">Actions</h3>
+            <div class="panel-buttons flex flex-col gap-2">
+                <button id="undo" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">↩️</span> Undo (Ctrl+Z)
+                </button>
+                <button id="redo" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">↪️</span> Redo (Ctrl+X)
+                </button>
+                <button id="clear" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🗑️</span> Clear All
+                </button>
+                <button id="save" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">💾</span> Save (Ctrl+S)
+                </button>
+                <button id="image-upload" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🖼️</span> Add Image
+                </button>
+                <button id="record" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🔴</span> Record
+                </button>
+                <button id="theme-switch" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">🌙</span> Dark Mode
+                </button>
+                <button id="grid-toggle" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">📏</span> Toggle Grid
+                </button>
+                <button id="back-to-dashboard" class="text-left px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2">
+                    <span class="text-lg">📋</span> Dashboard
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Canvas Area -->
+        <div class="flex-1 relative">
+            <canvas id="whiteboard" class="w-full h-full"></canvas>
+            
+            <!-- Slides Navigation (only visible in whiteboard view) -->
+            <div class="slides-container fixed bottom-0 left-0 w-full bg-white bg-opacity-90 border-t border-divider py-2 px-4 flex justify-center z-10">
+                <div class="slides-scroll flex gap-4 overflow-x-auto max-w-[calc(100%-120px)] px-2 scrollbar-thin">
+                    <!-- Slide thumbnails will be added here by JS -->
+                </div>
+                <div class="flex items-center ml-4">
+                    <button class="new-slide-btn bg-primary text-white rounded px-3 py-2 text-sm flex items-center">
+                        <span class="text-lg mr-1">+</span> New Slide
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="dist/script.js"></script>
+    <script src="dist/debug.js"></script>
     <script src="auth.js"></script>
+    
+    <!-- Development mode bypass -->
+    <script>
+        // Check if we're in development mode
+        if (window.location.hostname === 'localhost' || 
+            window.location.hostname === '127.0.0.1') {
+            console.log("Development environment detected - bypassing auth for testing");
+            
+            // Create a mock user if none exists
+            if (!localStorage.getItem('whiteboardly_user')) {
+                const mockUser = {
+                    id: 'dev-user-123',
+                    name: 'Development User',
+                    email: 'dev@example.com',
+                    avatar: 'https://ui-avatars.com/api/?name=Dev+User&background=random',
+                    token: 'mock-token-for-development'
+                };
+                localStorage.setItem('whiteboardly_user', JSON.stringify(mockUser));
+                console.log("Created mock user for development");
+            }
+            
+            // Create debug button to directly show whiteboard
+            document.addEventListener('DOMContentLoaded', function() {
+                const debugControls = document.createElement('div');
+                debugControls.style = `
+                    position: fixed; 
+                    top: 10px; 
+                    left: 50%; 
+                    transform: translateX(-50%);
+                    z-index: 10000; 
+                    background: #333; 
+                    color: white; 
+                    padding: 10px; 
+                    border-radius: 4px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                `;
+                debugControls.innerHTML = `
+                    <div style="font-weight:bold;margin-bottom:5px;text-align:center;">Dev Controls</div>
+                    <div style="display:flex;gap:5px;">
+                        <button id="dev-login">Login</button>
+                        <button id="dev-dashboard">Dashboard</button>
+                        <button id="dev-whiteboard">Whiteboard</button>
+                        <button id="dev-toggle-debug">Toggle Debug</button>
+                    </div>
+                `;
+                document.body.appendChild(debugControls);
+                
+                // Add event listeners to debug buttons
+                document.getElementById('dev-login').addEventListener('click', function() {
+                    const loginContainer = document.getElementById('login-container');
+                    const dashboardContainer = document.getElementById('dashboard-container');
+                    const whiteboardContainer = document.getElementById('whiteboard-container');
+                    
+                    loginContainer.classList.remove('hidden');
+                    loginContainer.classList.add('flex');
+                    dashboardContainer.classList.add('hidden');
+                    dashboardContainer.classList.remove('flex');
+                    whiteboardContainer.classList.add('hidden');
+                    whiteboardContainer.classList.remove('flex');
+                });
+                
+                document.getElementById('dev-dashboard').addEventListener('click', function() {
+                    // This will use the existing function in auth.js
+                    if (typeof showDashboard === 'function') {
+                        showDashboard();
+                    } else {
+                        const loginContainer = document.getElementById('login-container');
+                        const dashboardContainer = document.getElementById('dashboard-container');
+                        const whiteboardContainer = document.getElementById('whiteboard-container');
+                        
+                        loginContainer.classList.add('hidden');
+                        loginContainer.classList.remove('flex');
+                        dashboardContainer.classList.remove('hidden');
+                        dashboardContainer.classList.add('flex');
+                        whiteboardContainer.classList.add('hidden');
+                        whiteboardContainer.classList.remove('flex');
+                    }
+                });
+                
+                document.getElementById('dev-whiteboard').addEventListener('click', function() {
+                    const loginContainer = document.getElementById('login-container');
+                    const dashboardContainer = document.getElementById('dashboard-container');
+                    const whiteboardContainer = document.getElementById('whiteboard-container');
+                    
+                    loginContainer.classList.add('hidden');
+                    loginContainer.classList.remove('flex');
+                    dashboardContainer.classList.add('hidden');
+                    dashboardContainer.classList.remove('flex');
+                    whiteboardContainer.classList.remove('hidden');
+                    whiteboardContainer.classList.add('flex');
+                    
+                    // Initialize minimal whiteboard if needed
+                    if (!window.whiteboardApp || !window.whiteboardApp.canvas) {
+                        console.log("Initializing minimal whiteboard for development");
+                        setTimeout(() => {
+                            if (typeof window.initializeMinimalWhiteboard === 'function') {
+                                window.initializeMinimalWhiteboard();
+                            }
+                        }, 100);
+                    } else {
+                        // Force canvas size update
+                        const canvas = document.getElementById('whiteboard');
+                        if (canvas) {
+                            canvas.width = canvas.clientWidth;
+                            canvas.height = canvas.clientHeight;
+                            
+                            // Draw something to show it's working
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = '#f0f0f0';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.font = '24px Arial';
+                            ctx.fillStyle = '#333';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Development Whiteboard', canvas.width/2, canvas.height/2);
+                        }
+                    }
+                });
+                
+                document.getElementById('dev-toggle-debug').addEventListener('click', function() {
+                    const debugMenu = document.querySelector('[id^="debug-"]').closest('div');
+                    if (debugMenu) {
+                        debugMenu.style.display = debugMenu.style.display === 'none' ? 'block' : 'none';
+                    }
+                });
+                
+                // Auto-show dashboard in dev mode
+                setTimeout(function() {
+                    document.getElementById('dev-dashboard').click();
+                }, 500);
+            });
+        }
+    </script>
+    
+    <!-- Debug script -->
+    <script>
+        console.log("DEBUG: Initializing debug script");
+        
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DEBUG: DOM loaded");
+            console.log("DEBUG: Looking for whiteboard", document.getElementById('whiteboard'));
+            
+            // Log all toolbar icons and buttons
+            console.log("DEBUG: Toolbar icons found:", document.querySelectorAll('.toolbar-icon').length);
+            console.log("DEBUG: Tool buttons found:", document.querySelectorAll('.tool-btn').length);
+            
+            // Attach direct click listeners to toolbar icons
+            document.querySelectorAll('.toolbar-icon').forEach(icon => {
+                console.log("DEBUG: Adding click listener to icon", icon);
+                icon.addEventListener('click', function() {
+                    console.log("DEBUG: Toolbar icon clicked", this);
+                    const panelId = this.getAttribute('data-panel') + '-panel';
+                    const panel = document.getElementById(panelId);
+                    console.log("DEBUG: Looking for panel", panelId, panel);
+                    
+                    if (panel) {
+                        // Close all panels
+                        document.querySelectorAll('.toolbar-panel').forEach(p => {
+                            p.classList.add('hidden');
+                        });
+                        
+                        // Show this panel
+                        panel.classList.toggle('hidden');
+                    }
+                });
+            });
+            
+            // Log toolbar
+            const toolbar = document.querySelector('.toolbar');
+            console.log("DEBUG: Toolbar element:", toolbar);
+            
+            // Fix whiteboard initialization
+            console.log("DEBUG: Checking window.whiteboardApp", window.whiteboardApp);
+            
+            // Wait a bit and try to initialize
+            setTimeout(function() {
+                // If there's a syntax error, try creating a minimal Whiteboard
+                if (!window.whiteboardApp) {
+                    console.log("DEBUG: Whiteboard not found - trying to create a minimal version");
+                    try {
+                        window.whiteboardApp = {
+                            setTool: function(tool) {
+                                console.log("DEBUG: Setting tool to", tool);
+                                this.currentTool = tool;
+                            },
+                            currentTool: 'pen',
+                            currentColor: '#000000',
+                            currentThickness: 3,
+                            fillShape: false
+                        };
+                        
+                        // Add tool button functionality
+                        document.querySelectorAll('.tool-btn, #pen, #eraser, #rectangle, #circle, #line, #text, #select').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                console.log("DEBUG: Tool button clicked", this);
+                                const toolType = this.getAttribute('data-tool') || this.id;
+                                if (toolType) {
+                                    window.whiteboardApp.setTool(toolType);
+                                }
+                            });
+                        });
+                        
+                        console.log("DEBUG: Created minimal whiteboard object");
+                    } catch(e) {
+                        console.error("DEBUG ERROR:", e);
+                    }
+                }
+            }, 1000);
+        });
+        
+        // Try to fix the syntax error
+        function checkWhiteboardElements() {
+            console.log("DEBUG: ---------------");
+            console.log("DEBUG: Canvas:", document.getElementById('whiteboard'));
+            console.log("DEBUG: Toolbar:", document.querySelector('.toolbar'));
+            console.log("DEBUG: Pen button:", document.getElementById('pen'));
+            console.log("DEBUG: Rectangle button:", document.getElementById('rectangle'));
+            console.log("DEBUG: Toolbar icons:", document.querySelectorAll('.toolbar-icon'));
+            console.log("DEBUG: ---------------");
+        }
+        
+        // Run element check multiple times
+        setTimeout(checkWhiteboardElements, 500);
+        setTimeout(checkWhiteboardElements, 2000);
+        setTimeout(checkWhiteboardElements, 5000);
+        
+        // REMOVE direct event handlers that create alerts
+        window.addEventListener('load', function() {
+            console.log("DEBUG: Window loaded - all elements should be ready");
+        });
+    </script>
 </body>
 </html> 

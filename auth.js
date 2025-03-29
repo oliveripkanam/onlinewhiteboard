@@ -283,16 +283,18 @@ function promptRenameWhiteboard(whiteboardId, nameElement) {
     modal.innerHTML = `
         <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Rename Whiteboard</h3>
-            <input type="text" id="new-whiteboard-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary" 
-                value="${whiteboard.name}" placeholder="Enter whiteboard name">
-            <div class="mt-4 flex justify-end gap-2">
-                <button id="cancel-rename" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                    Cancel
-                </button>
-                <button id="confirm-rename" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-dark">
-                    Rename
-                </button>
-            </div>
+            <form id="rename-form">
+                <input type="text" id="new-whiteboard-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary" 
+                    value="${whiteboard.name}" placeholder="Enter whiteboard name">
+                <div class="mt-4 flex justify-end gap-2">
+                    <button type="button" id="cancel-rename" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button type="submit" id="confirm-rename" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-dark">
+                        Rename
+                    </button>
+                </div>
+            </form>
         </div>
     `;
     
@@ -313,8 +315,10 @@ function promptRenameWhiteboard(whiteboardId, nameElement) {
         document.body.removeChild(modal);
     });
     
-    // Handle confirm button
-    document.getElementById('confirm-rename').addEventListener('click', async () => {
+    // Handle form submission
+    document.getElementById('rename-form').addEventListener('submit', async (e) => {
+        e.preventDefault(); // Prevent form submission
+        
         const newName = document.getElementById('new-whiteboard-name').value.trim();
         if (newName && newName !== whiteboard.name) {
             // Update whiteboard name
@@ -357,17 +361,17 @@ function promptRenameWhiteboard(whiteboardId, nameElement) {
             }
         }
         
-        // Remove modal
+        // Remove modal immediately after rename is processed
         document.body.removeChild(modal);
     });
     
-    // Handle Enter key in input
+    // We don't need the confirm-rename click handler anymore as we're using form submission
+    // But we keep the Enter and Escape key handlers for better UX
     document.getElementById('new-whiteboard-name').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            document.getElementById('confirm-rename').click();
-        } else if (e.key === 'Escape') {
+        if (e.key === 'Escape') {
             document.getElementById('cancel-rename').click();
         }
+        // Enter key is handled automatically by form submission
     });
 }
 
@@ -660,9 +664,9 @@ async function deleteWhiteboard(whiteboardId) {
             return;
         }
         
-        // Delete from server
+        // Delete from server - changed from DELETE to POST for better compatibility
         const response = await fetch(`${API_BASE_URL}/deleteWhiteboard?id=${whiteboardId}`, {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
                 'Authorization': `Bearer ${currentUser.token}`,
                 'Content-Type': 'application/json'

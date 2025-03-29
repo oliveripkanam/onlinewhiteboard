@@ -32,6 +32,7 @@ exports.handler = async (event, context) => {
     };
   }
 
+  let client;
   try {
     // Get whiteboard ID from query parameters
     const whiteboardId = event.queryStringParameters?.id;
@@ -56,17 +57,32 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Connect to MongoDB
-    const client = new MongoClient(MONGODB_URI);
+    // Connect to MongoDB with new connection options
+    const options = { 
+      useNewUrlParser: true, 
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000 // 5 second timeout
+    };
+    
+    client = new MongoClient(MONGODB_URI, options);
     await client.connect();
+    console.log("Connected to MongoDB successfully");
+    
     const db = client.db(DB_NAME);
     const collection = db.collection(COLLECTION_NAME);
 
-    // Find the whiteboard and check if the user is the owner
-    const whiteboard = await collection.findOne({ _id: new ObjectId(whiteboardId) });
+    // First try to find the whiteboard - handle both string IDs and ObjectIds
+    let whiteboard;
+    try {
+      // Try with ObjectId first
+      whiteboard = await collection.findOne({ _id: new ObjectId(whiteboardId) });
+    } catch (err) {
+      // If ObjectId fails, try with string ID
+      whiteboard = await collection.findOne({ id: whiteboardId });
+    }
     
     if (!whiteboard) {
-      await client.close();
+      console.log(`Whiteboard not found: ${whiteboardId}`);
       return {
         statusCode: 404,
         headers,
@@ -74,15 +90,25 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Delete the whiteboard
-    await collection.deleteOne({ _id: new ObjectId(whiteboardId) });
+    console.log(`Found whiteboard: ${JSON.stringify(whiteboard)}`);
+
+    // Delete using the appropriate ID field
+    let deleteResult;
+    if (whiteboard._id) {
+      deleteResult = await collection.deleteOne({ _id: whiteboard._id });
+    } else {
+      deleteResult = await collection.deleteOne({ id: whiteboardId });
+    }
     
-    await client.close();
+    console.log(`Deletion result: ${JSON.stringify(deleteResult)}`);
     
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ message: 'Whiteboard deleted successfully' })
+      body: JSON.stringify({ 
+        message: 'Whiteboard deleted successfully',
+        result: deleteResult
+      })
     };
   } catch (error) {
     console.error('Error deleting whiteboard:', error);
@@ -90,7 +116,17 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Error deleting whiteboard', details: error.message })
+      body: JSON.stringify({ 
+        error: 'Error deleting whiteboard', 
+        details: error.message,
+        stack: error.stack
+      })
     };
+  } finally {
+    // Make sure to close the connection in all cases
+    if (client) {
+      await client.close();
+      console.log("MongoDB connection closed");
+    }
   }
 }; 

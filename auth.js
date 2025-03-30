@@ -673,7 +673,11 @@ async function deleteWhiteboard(whiteboardId) {
             }
         });
         
-        if (!response.ok) {
+        // Handle 404 as success - the whiteboard doesn't exist on server which is what we wanted
+        if (response.status === 404) {
+            console.log(`Whiteboard ${whiteboardId} not found on server, removing from local storage.`);
+            // Just continue with local cleanup
+        } else if (!response.ok) {
             throw new Error(`Error deleting whiteboard: ${response.statusText}`);
         }
         

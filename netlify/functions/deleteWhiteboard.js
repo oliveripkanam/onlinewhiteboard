@@ -75,6 +75,9 @@ exports.handler = async (event, context) => {
       serverSelectionTimeoutMS: 5000 // 5 second timeout
     };
     
+    // Define collection variable at the outer scope
+    let collection;
+    
     try {
       // Create client
       console.log("Creating MongoDB client...");
@@ -89,7 +92,7 @@ exports.handler = async (event, context) => {
       console.log(`Accessing database '${DB_NAME}'...`);
       const db = client.db(DB_NAME);
       console.log(`Accessing collection '${COLLECTION_NAME}'...`);
-      const collection = db.collection(COLLECTION_NAME);
+      collection = db.collection(COLLECTION_NAME);
       
       console.log("MongoDB setup complete");
     } catch (connectionError) {

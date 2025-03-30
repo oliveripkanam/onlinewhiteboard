@@ -59,8 +59,6 @@ exports.handler = async (event, context) => {
 
     // Connect to MongoDB with new connection options
     const options = { 
-      useNewUrlParser: true, 
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000 // 5 second timeout
     };
     

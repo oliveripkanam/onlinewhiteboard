@@ -10,7 +10,8 @@
   "dependencies": {
     "faunadb": "^4.8.0",
     "google-auth-library": "^8.7.0",
-    "mongodb": "^6.15.0"
+    "mongodb": "^6.15.0",
+    "npx": "^10.2.2"
   },
   "devDependencies": {
     "serve": "^14.2.0",

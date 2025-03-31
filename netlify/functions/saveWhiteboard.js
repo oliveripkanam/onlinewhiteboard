@@ -68,7 +68,7 @@ exports.handler = async function(event, context) {
     
     // Connect to MongoDB
     await client.connect();
-    const database = client.db('whiteboardly');
+    const database = client.db('Whiteboardly');
     const whiteboardsCollection = database.collection('whiteboards');
     const contentsCollection = database.collection('whiteboard_contents');
     

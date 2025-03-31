@@ -646,55 +646,48 @@ async function saveWhiteboard(whiteboardId, content, thumbnail) {
 
 // Delete a whiteboard
 async function deleteWhiteboard(whiteboardId) {
-    if (!currentUser || !whiteboardId) return;
-    
     try {
-        showLoadingIndicator();
+        showSpinner();
         
-        const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
-        if (!whiteboard) {
-            throw new Error(`Whiteboard not found: ${whiteboardId}`);
+        // Log the request for debugging
+        console.log(`Deleting whiteboard: ${whiteboardId}`);
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No token found. User not authenticated.');
+            showMessage('You must be logged in to delete a whiteboard', 'error');
+            hideSpinner();
+            return false;
         }
         
-        // If it's a local whiteboard, remove from localStorage only
-        if (whiteboard.isLocal) {
-            localStorage.removeItem(`whiteboard_content_${whiteboardId}`);
-            userWhiteboards = userWhiteboards.filter(wb => wb.id !== whiteboardId);
-            localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
-            renderWhiteboardsList();
-            return;
-        }
-        
-        // Delete from server - changed from DELETE to POST for better compatibility
+        // Use POST method instead of DELETE to avoid CORS issues
         const response = await fetch(`${API_BASE_URL}/deleteWhiteboard?id=${whiteboardId}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${currentUser.token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
         
-        // Handle 404 as success - the whiteboard doesn't exist on server which is what we wanted
-        if (response.status === 404) {
-            console.log(`Whiteboard ${whiteboardId} not found on server, removing from local storage.`);
-            // Just continue with local cleanup
-        } else if (!response.ok) {
-            throw new Error(`Error deleting whiteboard: ${response.statusText}`);
+        console.log(`Delete response status: ${response.status}`);
+        
+        const data = await response.json();
+        if (response.ok) {
+            console.log('Whiteboard deleted successfully:', data);
+            showMessage('Whiteboard deleted successfully', 'success');
+            await loadWhiteboards(); // Refresh the list
+            return true;
+        } else {
+            console.error('Error deleting whiteboard:', data);
+            showMessage(`Failed to delete whiteboard: ${data.error || 'Unknown error'}`, 'error');
+            return false;
         }
-        
-        // Remove from local array
-        userWhiteboards = userWhiteboards.filter(wb => wb.id !== whiteboardId);
-        
-        // Also update localStorage
-        localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
-        
-        // Refresh the display
-        renderWhiteboardsList();
     } catch (error) {
-        console.error('Error deleting whiteboard:', error);
-        showError('Failed to delete the whiteboard. Please try again.');
+        console.error('Error in deleteWhiteboard function:', error);
+        showMessage('An error occurred while deleting the whiteboard', 'error');
+        return false;
     } finally {
-        hideLoadingIndicator();
+        hideSpinner();
     }
 }
 
@@ -968,4 +961,91 @@ async function uploadImageToWhiteboard(whiteboardId) {
     
     // Trigger file selection dialog
     fileInput.click();
+}
+
+async function renameWhiteboard(whiteboardId, newName) {
+    try {
+        showSpinner();
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No token found. User not authenticated.');
+            showMessage('You must be logged in to rename a whiteboard', 'error');
+            hideSpinner();
+            return false;
+        }
+        
+        // Find the whiteboard in the list
+        const whiteboard = userWhiteboards.find(wb => wb.id === whiteboardId);
+        if (!whiteboard) {
+            console.error(`Whiteboard with ID ${whiteboardId} not found`);
+            showMessage('Whiteboard not found', 'error');
+            hideSpinner();
+            return false;
+        }
+        
+        // Update the name locally
+        whiteboard.name = newName;
+        
+        const response = await fetch(`${API_BASE_URL}/saveWhiteboard`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ whiteboard })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            console.log('Whiteboard renamed successfully');
+            showMessage('Whiteboard renamed successfully', 'success');
+            
+            // Close the rename dialog immediately
+            const renameDialog = document.getElementById('rename-dialog');
+            if (renameDialog) {
+                renameDialog.style.display = 'none';
+            }
+            
+            await loadWhiteboards(); // Refresh the list
+            return true;
+        } else {
+            console.error('Error renaming whiteboard:', data);
+            showMessage(`Failed to rename whiteboard: ${data.error || 'Unknown error'}`, 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error in renameWhiteboard function:', error);
+        showMessage('An error occurred while renaming the whiteboard', 'error');
+        return false;
+    } finally {
+        hideSpinner();
+    }
+}
+
+function setupRenameForm() {
+    const renameForm = document.getElementById('rename-form');
+    if (!renameForm) return;
+    
+    renameForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const whiteboardId = renameForm.dataset.whiteboardId;
+        const newNameInput = document.getElementById('new-name');
+        const newName = newNameInput.value.trim();
+        
+        if (!newName) {
+            showMessage('Please enter a name for the whiteboard', 'error');
+            return;
+        }
+        
+        const success = await renameWhiteboard(whiteboardId, newName);
+        
+        // Close dialog immediately after submitting, even if not successful
+        // This prevents needing to click twice
+        const renameDialog = document.getElementById('rename-dialog');
+        if (renameDialog) {
+            renameDialog.style.display = 'none';
+        }
+    });
 } 

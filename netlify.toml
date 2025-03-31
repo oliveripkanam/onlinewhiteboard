@@ -4,21 +4,43 @@
 
 [dev]
   command = "npm run dev"
-  port = 8888
-  targetPort = 3000
-  framework = "#custom"
+  port = 8080
+  publish = "."
 
+# Redirect all paths to index.html for SPA routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  # Bypass for API and assets
+  force = false
 
+# Redirect API calls to functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Fix JavaScript content type issues
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+    X-Content-Type-Options = "nosniff"
+    
+# Set security headers for all paths
 [[headers]]
   for = "/*"
-    [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate" 
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "no-referrer-when-downgrade"
+    X-Content-Type-Options = "nosniff"
+
+# Set CORS headers for API routes
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization" 

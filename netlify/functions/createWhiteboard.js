@@ -1,4 +1,3 @@
-// Netlify function to delete a whiteboard
 const { MongoClient } = require('mongodb');
 
 exports.handler = async function(event, context) {
@@ -6,7 +5,7 @@ exports.handler = async function(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Content-Type': 'application/json'
   };
 
@@ -15,15 +14,6 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 200,
       headers
-    };
-  }
-
-  // Support both DELETE and POST methods
-  if (event.httpMethod !== 'DELETE' && event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed. Use DELETE or POST.' })
     };
   }
 
@@ -36,28 +26,6 @@ exports.handler = async function(event, context) {
       statusCode: 401,
       headers,
       body: JSON.stringify({ error: 'Authentication required' })
-    };
-  }
-
-  // Get the whiteboard ID 
-  // Support both query parameters and JSON body
-  let whiteboardId;
-  if (event.queryStringParameters && event.queryStringParameters.id) {
-    whiteboardId = event.queryStringParameters.id;
-  } else if (event.body) {
-    try {
-      const body = JSON.parse(event.body);
-      whiteboardId = body.id;
-    } catch (e) {
-      // If body parsing fails, continue with query parameters
-    }
-  }
-
-  if (!whiteboardId) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ error: 'Whiteboard ID is required' })
     };
   }
 
@@ -77,53 +45,41 @@ exports.handler = async function(event, context) {
     // to simplify the process
     const userId = token;
     
+    // Generate a unique whiteboard ID
+    const whiteboardId = `wb_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
     const database = client.db('whiteboardly');
     const whiteboardsCollection = database.collection('whiteboards');
-    const contentsCollection = database.collection('whiteboard_contents');
     
-    console.log(`Deleting whiteboard: ${whiteboardId} for user: ${userId}`);
-    
-    // Delete the whiteboard
-    const deleteResult = await whiteboardsCollection.deleteOne({
+    // Create a new whiteboard
+    const newWhiteboard = {
       id: whiteboardId,
-      owner: userId
-    });
+      owner: userId,
+      name: `Whiteboard ${new Date().toLocaleString()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      thumbnail: null
+    };
     
-    console.log("Whiteboard deletion result:", deleteResult);
-    
-    if (deleteResult.deletedCount === 0) {
-      return {
-        statusCode: 404,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Whiteboard not found or not owned by this user' 
-        })
-      };
-    }
-    
-    // Also delete the content
-    const contentDeleteResult = await contentsCollection.deleteOne({
-      whiteboardId
-    });
-    
-    console.log("Content deletion result:", contentDeleteResult);
+    const result = await whiteboardsCollection.insertOne(newWhiteboard);
+    console.log("Whiteboard created:", result);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
         success: true,
-        message: 'Whiteboard deleted successfully'
+        whiteboard: newWhiteboard
       })
     };
   } catch (error) {
-    console.error('Error in deleteWhiteboard:', error);
+    console.error('Error in createWhiteboard:', error);
     
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
-        error: 'Error deleting whiteboard',
+        error: 'Error creating whiteboard',
         details: error.message,
         stack: error.stack
       })

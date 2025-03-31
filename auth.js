@@ -556,25 +556,26 @@ async function openWhiteboard(whiteboardId) {
         }
         
         // Initialize whiteboard with content
-        if (window.whiteboardApp) {
-            window.whiteboardApp.currentWhiteboardId = whiteboardId;
-            
-            // Force canvas size update
-            if (window.whiteboardApp.canvas) {
-                window.whiteboardApp.canvas.width = window.whiteboardApp.canvas.clientWidth;
-                window.whiteboardApp.canvas.height = window.whiteboardApp.canvas.clientHeight;
-            }
-            
-            // Reset view to ensure no offset when opening
-            if (typeof window.whiteboardApp.resetView === 'function') {
-                window.whiteboardApp.resetView();
-            }
-            
-            console.log('Whiteboard initialized with ID:', whiteboardId);
-        } else {
-            console.error('Whiteboard app not initialized');
-            alert('Error: Whiteboard app not initialized');
+        if (!window.whiteboardApp) {
+            // Initialize the whiteboard if it doesn't exist
+            console.log('Creating new whiteboard instance');
+            window.whiteboardApp = new Whiteboard();
         }
+        
+        window.whiteboardApp.currentWhiteboardId = whiteboardId;
+        
+        // Force canvas size update
+        if (window.whiteboardApp.canvas) {
+            window.whiteboardApp.canvas.width = window.whiteboardApp.canvas.clientWidth;
+            window.whiteboardApp.canvas.height = window.whiteboardApp.canvas.clientHeight;
+        }
+        
+        // Reset view to ensure no offset when opening
+        if (typeof window.whiteboardApp.resetView === 'function') {
+            window.whiteboardApp.resetView();
+        }
+        
+        console.log('Whiteboard initialized with ID:', whiteboardId);
         
     } catch (error) {
         console.error('Error opening whiteboard:', error);

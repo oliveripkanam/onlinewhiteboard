@@ -256,21 +256,19 @@
             </div>
         </div>
         
-        <!-- Main Canvas Area -->
-        <div class="flex-1 relative">
-            <canvas id="whiteboard" class="w-full h-full"></canvas>
-            
-            <!-- Slides Navigation (only visible in whiteboard view) -->
-            <div class="slides-container fixed bottom-0 left-0 w-full bg-white bg-opacity-90 border-t border-divider py-2 px-4 flex justify-center z-10">
-                <div class="slides-scroll flex gap-4 overflow-x-auto max-w-[calc(100%-120px)] px-2 scrollbar-thin">
-                    <!-- Slide thumbnails will be added here by JS -->
-                </div>
-                <div class="flex items-center ml-4">
-                    <button class="new-slide-btn bg-primary text-white rounded px-3 py-2 text-sm flex items-center">
-                        <span class="text-lg mr-1">+</span> New Slide
-                    </button>
-                </div>
+        <!-- Canvas needs to be here -->
+        <canvas id="whiteboard" class="flex-grow bg-white"></canvas>
+        
+        <!-- Loading and error messages -->
+        <div id="loading-indicator" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-20 flex items-center justify-center z-50">
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p class="mt-2 text-gray-700">Loading...</p>
             </div>
+        </div>
+        
+        <div id="error-message" class="hidden fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50">
+            Error message goes here
         </div>
     </div>
 
@@ -506,6 +504,18 @@
         // REMOVE direct event handlers that create alerts
         window.addEventListener('load', function() {
             console.log("DEBUG: Window loaded - all elements should be ready");
+        });
+    </script>
+    
+    <!-- Make sure to properly load the whiteboard script -->
+    <script src="dist/script.js"></script>
+    <script>
+        // Initialize whiteboard when ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('whiteboard')) {
+                window.whiteboardApp = new Whiteboard();
+                console.log("Whiteboard initialized from script.js");
+            }
         });
     </script>
 </body>

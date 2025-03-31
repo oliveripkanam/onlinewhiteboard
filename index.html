@@ -281,8 +281,14 @@
             if (document.getElementById('whiteboard')) {
                 console.log("DEBUG: Found whiteboard element, initializing");
                 try {
-                    window.whiteboardApp = new MinimalWhiteboard();
-                    console.log("DEBUG: Whiteboard initialized successfully");
+                    // Instead of trying to instantiate MinimalWhiteboard directly,
+                    // use the initialization function that's defined in debug.js
+                    if (typeof window.initializeMinimalWhiteboard === 'function') {
+                        window.initializeMinimalWhiteboard();
+                        console.log("DEBUG: Whiteboard initialized successfully using initializeMinimalWhiteboard");
+                    } else {
+                        console.error("ERROR: initializeMinimalWhiteboard function not found");
+                    }
                 } catch (e) {
                     console.error("ERROR initializing whiteboard:", e);
                 }

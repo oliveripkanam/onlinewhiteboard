@@ -272,9 +272,25 @@
         </div>
     </div>
 
-    <script src="dist/script.js"></script>
     <script src="dist/debug.js"></script>
-    <script src="auth.js"></script>
+    <script src="dist/script.js"></script>
+    <script>
+        // Initialize whiteboard when ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DEBUG: DOM loaded");
+            if (document.getElementById('whiteboard')) {
+                console.log("DEBUG: Found whiteboard element, initializing");
+                try {
+                    window.whiteboardApp = new MinimalWhiteboard();
+                    console.log("DEBUG: Whiteboard initialized successfully");
+                } catch (e) {
+                    console.error("ERROR initializing whiteboard:", e);
+                }
+            } else {
+                console.log("DEBUG: Whiteboard element not found");
+            }
+        });
+    </script>
     
     <!-- Development mode bypass -->
     <script>
@@ -507,16 +523,6 @@
         });
     </script>
     
-    <!-- Make sure to properly load the whiteboard script -->
-    <script src="dist/script.js"></script>
-    <script>
-        // Initialize whiteboard when ready
-        document.addEventListener('DOMContentLoaded', function() {
-            if (document.getElementById('whiteboard')) {
-                window.whiteboardApp = new Whiteboard();
-                console.log("Whiteboard initialized from script.js");
-            }
-        });
-    </script>
+    <script src="auth.js"></script>
 </body>
 </html> 

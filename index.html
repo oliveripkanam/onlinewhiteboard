@@ -272,8 +272,11 @@
         </div>
     </div>
 
-    <script src="/dist/script.js"></script>
-    <script src="/dist/debug.js"></script>
+    <!-- Load scripts with proper paths and content types -->
+    <script src="auth.js"></script>
+    <script src="dist/script.js" type="text/javascript"></script>
+    <script src="dist/debug.js" type="text/javascript"></script>
+    
     <script>
       // Initialize the application with error handling
       window.addEventListener('DOMContentLoaded', () => {
@@ -343,14 +346,43 @@
           
           // Initialize auth and dashboard functionality
           try {
-            initAuth();
-            setupCreateWhiteboardButton();
+            // No need to call initAuth as onUserSignedIn is used instead
+            // setupCreateWhiteboardButton();
             setupRenameForm();
           } catch (error) {
             console.error('Error initializing dashboard:', error);
           }
         }
       });
+
+      // Add missing initAuth function
+      function initAuth() {
+        console.log('Initializing auth...');
+        // Check if user is already signed in from localStorage
+        if (localStorage.getItem('whiteboardly_user')) {
+          try {
+            const savedUser = JSON.parse(localStorage.getItem('whiteboardly_user'));
+            // Call onUserSignedIn if it exists
+            if (typeof onUserSignedIn === 'function') {
+              currentUser = savedUser;
+              onUserSignedIn();
+            }
+          } catch (e) {
+            console.error('Error parsing stored user:', e);
+          }
+        }
+      }
+
+      // Make sure setupRenameForm exists
+      function setupRenameForm() {
+        const renameForm = document.getElementById('rename-form');
+        if (!renameForm) {
+          console.log('No rename form found, skipping setup');
+          return;
+        }
+        console.log('Setting up rename form');
+        // The real implementation is in auth.js
+      }
     </script>
     
     <!-- Development mode bypass -->
@@ -583,7 +615,5 @@
             console.log("DEBUG: Window loaded - all elements should be ready");
         });
     </script>
-    
-    <script src="auth.js"></script>
 </body>
 </html> 

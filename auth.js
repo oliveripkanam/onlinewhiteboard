@@ -204,65 +204,80 @@ function isDevelopmentMode() {
 
 // Load whiteboards from server
 async function loadWhiteboards() {
-    if (!currentUser) return;
+    if (!currentUser && !isDevelopmentMode()) return;
     
     try {
         showLoadingIndicator();
         
+        // Always check localStorage first for any local whiteboards
+        const localWhiteboards = localStorage.getItem('whiteboardly_local_boards');
+        let localBoards = [];
+        
+        if (localWhiteboards) {
+            try {
+                localBoards = JSON.parse(localWhiteboards);
+                console.log(`Found ${localBoards.length} whiteboards in localStorage`);
+            } catch (e) {
+                console.error('Error parsing local whiteboards:', e);
+                localBoards = [];
+            }
+        }
+        
         // Check if we're in a local environment (localhost)
         const isLocalhost = isDevelopmentMode();
         
-        // If local, skip API call and use localStorage only
-        if (isLocalhost) {
-            console.log('Running in local development - using localStorage for whiteboards');
-            const localWhiteboards = localStorage.getItem('whiteboardly_local_boards');
-            if (localWhiteboards) {
-                try {
-                    userWhiteboards = JSON.parse(localWhiteboards);
-                } catch (e) {
-                    console.error('Error parsing local whiteboards:', e);
-                    userWhiteboards = [];
-                }
-            } else {
-                userWhiteboards = [];
-            }
+        // If local or no currentUser, use localStorage only
+        if (isLocalhost || !currentUser) {
+            console.log('Using localStorage for whiteboards (development mode or no user)');
+            userWhiteboards = localBoards;
             renderWhiteboardsList();
             hideLoadingIndicator();
             return;
         }
         
-        // For production - fetch from Netlify function
-        const response = await fetch(`${API_BASE_URL}/getWhiteboards`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${currentUser.token}`,
-                'Content-Type': 'application/json'
+        // For production - try to fetch from Netlify function
+        try {
+            const response = await fetch(`${API_BASE_URL}/getWhiteboards`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${currentUser.token}`,
+                    'Content-Type': 'application/json'
+                },
+                // Set a reasonable timeout to avoid hanging
+                timeout: 5000
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Error fetching whiteboards: ${response.statusText}`);
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error fetching whiteboards: ${response.statusText}`);
+            
+            const data = await response.json();
+            const serverWhiteboards = data.whiteboards || [];
+            
+            // Merge server whiteboards with local whiteboards
+            // Local whiteboards that exist both locally and on the server should use the server version
+            const serverIds = serverWhiteboards.map(wb => wb.id);
+            const onlyLocalBoards = localBoards.filter(wb => !serverIds.includes(wb.id));
+            
+            userWhiteboards = [...serverWhiteboards, ...onlyLocalBoards];
+            
+            // Update localStorage with combined list
+            localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
+            
+            console.log(`Loaded ${serverWhiteboards.length} whiteboards from server and ${onlyLocalBoards.length} from local storage`);
+        } catch (error) {
+            console.error('Error loading whiteboards from server:', error);
+            showMessage('Using local storage for whiteboards (server unavailable)', 'warning');
+            
+            // If API fails, use localStorage as fallback
+            userWhiteboards = localBoards;
         }
-        
-        const data = await response.json();
-        userWhiteboards = data.whiteboards || [];
         
         // Render whiteboards
         renderWhiteboardsList();
     } catch (error) {
-        console.error('Error loading whiteboards:', error);
-        showError('Using local storage for whiteboards (API unavailable)');
-        
-        // If API fails, check if we have any whiteboards in localStorage as fallback
-        const localWhiteboards = localStorage.getItem('whiteboardly_local_boards');
-        if (localWhiteboards) {
-            try {
-                userWhiteboards = JSON.parse(localWhiteboards);
-                renderWhiteboardsList();
-            } catch (e) {
-                console.error('Error parsing local whiteboards:', e);
-            }
-        }
+        console.error('Error in loadWhiteboards:', error);
+        showError('Failed to load whiteboards');
     } finally {
         hideLoadingIndicator();
     }
@@ -450,32 +465,53 @@ async function createNewWhiteboard() {
                 
                 // Only call API if not in local mode
                 if (!isLocalhost) {
-                    const response = await fetch(`${API_BASE_URL}/saveWhiteboard`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${currentUser.token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
-                            whiteboard: newWhiteboard,
-                            content: null
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`Error saving whiteboard: ${response.statusText}`);
-                    }
-                    
-                    // Get updated whiteboard with server ID
-                    const data = await response.json();
-                    if (data.whiteboard && data.whiteboard.id) {
-                        // Update the local copy with server ID
-                        const index = userWhiteboards.findIndex(wb => wb.id === newWhiteboard.id);
-                        if (index !== -1) {
-                            userWhiteboards[index] = data.whiteboard;
-                            localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/saveWhiteboard`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${currentUser?.token || 'local-token'}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                whiteboard: newWhiteboard,
+                                content: null
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        // Always treat as success even if we got a local mode fallback
+                        if (data.success) {
+                            console.log(`Whiteboard saved successfully in ${data.mode} mode`);
+                            
+                            // Update the whiteboard ID if we got one from the server
+                            if (data.whiteboardId) {
+                                console.log(`Updating whiteboard ID to ${data.whiteboardId}`);
+                                
+                                // Update the whiteboard with the new ID
+                                newWhiteboard.id = data.whiteboardId;
+                                
+                                // Update the whiteboard in the array
+                                const index = userWhiteboards.findIndex(wb => wb.id === newWhiteboard.id);
+                                if (index !== -1) {
+                                    userWhiteboards[index] = newWhiteboard;
+                                    localStorage.setItem('whiteboardly_local_boards', JSON.stringify(userWhiteboards));
+                                }
+                            }
+                            
+                            // If we had to fall back to local mode, show a message
+                            if (data.mode === 'local' && data.error) {
+                                console.warn('Server warning:', data.error);
+                                showMessage('Whiteboard created in offline mode', 'warning');
+                            }
+                        } else if (!response.ok) {
+                            console.error(`Error saving whiteboard: ${response.status} ${response.statusText}`);
+                            showMessage('Created whiteboard in offline mode', 'warning');
                         }
-                        newWhiteboard = data.whiteboard;
+                    } catch (apiError) {
+                        console.error('API error:', apiError);
+                        showMessage('Failed to save to server. Using local storage only.', 'warning');
+                        // Continue with local whiteboard
                     }
                 }
                 
@@ -488,7 +524,7 @@ async function createNewWhiteboard() {
                 
             } catch (error) {
                 console.error('Error creating whiteboard:', error);
-                showError('Failed to create new whiteboard. Please try again.');
+                showMessage('Created whiteboard in offline mode', 'warning');
                 reject(error);
             } finally {
                 hideLoadingIndicator();
@@ -652,7 +688,12 @@ async function deleteWhiteboard(whiteboardId) {
         // Log the request for debugging
         console.log(`Deleting whiteboard: ${whiteboardId}`);
         
-        const token = localStorage.getItem('token');
+        // Use currentUser token if available, otherwise check localStorage
+        let token = currentUser?.token;
+        if (!token) {
+            token = localStorage.getItem('token');
+        }
+        
         if (!token) {
             console.error('No token found. User not authenticated.');
             showMessage('You must be logged in to delete a whiteboard', 'error');
@@ -846,16 +887,8 @@ function hideLoadingIndicator() {
 
 // Show error message
 function showError(message) {
-    const errorEl = document.getElementById('error-message');
-    if (errorEl) {
-        errorEl.textContent = message;
-        errorEl.classList.remove('hidden');
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            errorEl.classList.add('hidden');
-        }, 5000);
-    }
+    console.error(message);
+    showMessage(message, 'error');
 }
 
 // Expose methods to be used by the whiteboard app
@@ -1048,4 +1081,54 @@ function setupRenameForm() {
             renameDialog.style.display = 'none';
         }
     });
+}
+
+// Show generic message
+function showMessage(message, type = 'info') {
+    console.log(message);
+    const errorEl = document.getElementById('error-message');
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+        errorEl.style.display = 'block';
+        
+        // Style based on type
+        if (type === 'error') {
+            errorEl.style.backgroundColor = '#fee2e2';
+            errorEl.style.color = '#b91c1c';
+        } else if (type === 'success') {
+            errorEl.style.backgroundColor = '#d1fae5';
+            errorEl.style.color = '#047857';
+        } else if (type === 'warning') {
+            errorEl.style.backgroundColor = '#fffbeb';
+            errorEl.style.color = '#92400e';
+        } else {
+            errorEl.style.backgroundColor = '#e0f2fe';
+            errorEl.style.color = '#0369a1';
+        }
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            errorEl.classList.add('hidden');
+            errorEl.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Show loading spinner
+function showSpinner() {
+    const loadingEl = document.getElementById('loading-indicator');
+    if (loadingEl) {
+        loadingEl.classList.remove('hidden');
+        loadingEl.style.display = 'flex';
+    }
+}
+
+// Hide loading spinner
+function hideSpinner() {
+    const loadingEl = document.getElementById('loading-indicator');
+    if (loadingEl) {
+        loadingEl.classList.add('hidden');
+        loadingEl.style.display = 'none';
+    }
 } 

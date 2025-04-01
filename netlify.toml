@@ -7,26 +7,38 @@
   port = 8080
   publish = "."
 
-# Redirect all paths to index.html for SPA routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  # Bypass for API and assets
-  force = false
-
 # Redirect API calls to functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Fix JavaScript content type issues
+# Redirect all paths to index.html for SPA routing
+# But exclude JavaScript files and other assets
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+  
+  # Important: Don't redirect these file types
+  conditions = {Path = ["*.js", "*.css", "*.jpg", "*.png", "*.gif", "*.svg", "*.ico", "/api/*", "/.netlify/functions/*"]}
+
+# Fix JavaScript content type issues - specifically target dist directory files
 [[headers]]
-  for = "*.js"
+  for = "/dist/*.js"
   [headers.values]
-    Content-Type = "application/javascript"
+    Content-Type = "application/javascript; charset=utf-8"
     X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=3600"
+
+# General JavaScript files
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=3600"
     
 # Set security headers for all paths
 [[headers]]
